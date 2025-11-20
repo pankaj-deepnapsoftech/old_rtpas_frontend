@@ -355,6 +355,9 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       lb: 453.59237,
       oz: 28.349523125,
       tonne: 1_000_000,
+      ton: 907_184.74, // US ton
+      lt: 1_016_046.91, // Long ton UK
+
       st: 6350.29318,
     },
     // base: millilitres
@@ -383,6 +386,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       pa: 1,
       kpa: 1000,
       mpa: 1_000_000,
+      bar: 100_000,
+      mb: 100,
+      hpa: 100,
+      atm: 101_325,
       bar: 100000,
       atm: 101325,
       psi: 6894.757293168,
@@ -402,6 +409,35 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       mi: 1609.344,
       nm: 1852,
     },
+
+    // base: square meter
+    area: {
+      m2: 1,
+      cm2: 0.0001,
+      mm2: 0.000001,
+      ft2: 0.092903,
+      yd2: 0.836127,
+      sqft: 0.092903,
+      acre: 4046.8564224,
+      ha: 10_000,
+    },
+
+    // base: joule
+    energy: {
+      j: 1,
+      kj: 1000,
+      mj: 1_000_000,
+      wh: 3600,
+      kwh: 3_600_000,
+      cal: 4.184,
+    },
+
+    // base: Kelvin (temperature multipliers not linear, set null)
+    temperature: {
+      c: null, // needs formula: K = C + 273.15
+      f: null, // needs formula: K = (F - 32) * 5/9 + 273.15
+      k: 1,
+    },
     // count units (no conversion)
     count: {
       pcs: 1,
@@ -418,7 +454,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     },
   };
 
-  const detectCategoryKey = (uom: string) => {
+  const detectCategoryKey = (uom: string): string | null => {
     if (UNIT_FACTORS.mass[uom] !== undefined) return "mass";
     if (UNIT_FACTORS.liquid[uom] !== undefined) return "liquid";
     if (UNIT_FACTORS.gas[uom] !== undefined) return "gas";
@@ -473,6 +509,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "m3", label: "Cubic Meter" },
     { value: "cm3", label: "Cubic Centimeter" },
     { value: "cf", label: "Cubic Feet" },
+    // { value: "in3", label: "Cubic Inch" },
+    { value: "ft3", label: "Cubic Foot" },
     { value: "in3", label: "Cubic Inch" },
     { value: "ft3", label: "Cubic Foot" },
     { value: "L", label: "Litre (for gases)" },
@@ -517,6 +555,32 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "roll", label: "Roll" },
   ];
 
+  const areaUnits = [
+    { value: "m2", label: "Square Meter" },
+    { value: "cm2", label: "Square Centimeter" },
+    { value: "mm2", label: "Square Millimeter" },
+    { value: "ft2", label: "Square Foot" },
+    { value: "yd2", label: "Square Yard" },
+    { value: "sqft", label: "Square Foot" },
+    { value: "acre", label: "Acre" },
+    { value: "ha", label: "Hectare" },
+    { value: "roll", label: "Roll" },
+  ];
+  const energyUnits = [
+    { value: "j", label: "Joule" },
+    { value: "kj", label: "Kilojoule" },
+    { value: "mj", label: "Megajoule" },
+    { value: "wh", label: "Watt Hour" },
+    { value: "kwh", label: "Kilowatt Hour" },
+    { value: "cal", label: "Calorie" },
+  ];
+
+  const temperatureUnits = [
+    { value: "c", label: "Celsius" },
+    { value: "f", label: "Fahrenheit" },
+    { value: "k", label: "Kelvin" },
+  ];
+
   // 2. Function to find category by uom value
   const getUnitCategory = (uom) => {
     if (massUnits.some((unit) => unit.value === uom)) return massUnits;
@@ -525,12 +589,15 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (pressureUnits.some((unit) => unit.value === uom)) return pressureUnits;
     if (lengthUnits.some((unit) => unit.value === uom)) return lengthUnits;
     if (countUnits.some((unit) => unit.value === uom)) return countUnits;
+     if (areaUnits.some((unit) => unit.value === uom)) return areaUnits;
+    if (energyUnits.some((unit) => unit.value === uom)) return energyUnits;
+    if (temperatureUnits.some((unit) => unit.value === uom)) return temperatureUnits;
     return [];
   };
-  const getOptionFromValue = (value, options) =>
-    options.find((opt) => opt.value === value) || null;
-  const uom = selectedProducts[0].uom;
-  const filteredOptions = getUnitCategory(uom);
+  // const getOptionFromValue = (value, options) =>
+  //   options.find((opt) => opt.value === value) || null;
+  // const uom = selectedProducts[0].uom;
+  // const filteredOptions = getUnitCategory(uom);
 
   const markProcessDoneHandler = async () => {
     try {

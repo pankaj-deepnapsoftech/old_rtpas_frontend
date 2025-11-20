@@ -107,10 +107,6 @@ const Payment: React.FC = () => {
     setFilteredData(results);
   }, [searchKey])
 
-  if (!isAllowed) {
-    return <div className="text-center text-red-500">You are not allowed to access this route.</div>
-  }
-
   return (
     <div
       className="min-h-screen"
