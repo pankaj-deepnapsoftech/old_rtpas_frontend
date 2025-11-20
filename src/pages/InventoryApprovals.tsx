@@ -338,6 +338,7 @@ const InventoryApprovals: React.FC = () => {
                 }}
               >
                 <FiCheckSquare />
+                Finished Goods Request
               </button>
             </div>
 
@@ -426,7 +427,9 @@ const InventoryApprovals: React.FC = () => {
             }}
           >
             <p className="text-sm" style={{ color: colors.text.secondary }}>
+              Choose a section above to view Request:{" "}
               <strong>BOM Raw Material</strong> or{" "}
+              <strong>Finished Goods Request</strong>.
             </p>
           </div>
         )}
