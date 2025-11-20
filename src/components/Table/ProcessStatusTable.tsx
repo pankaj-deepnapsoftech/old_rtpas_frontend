@@ -1471,7 +1471,6 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   <tr className="bg-blue-600 text-white">
                     <th className="p-3 text-left">Name</th>
                     <th className="p-3 text-left">Estimated Quantity</th>
-                    <th className="p-3 text-left">Used Quantity</th>
                     <th className="p-3 text-left">Unit Price</th>
                     <th className="p-3 text-left">Total Cost</th>
                   </tr>
@@ -1512,7 +1511,6 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   <tr className="bg-blue-600 text-white">
                     <th className="p-3 text-left">Name</th>
                     <th className="p-3 text-left">Estimated Quantity</th>
-                    <th className="p-3 text-left">Used Quantity</th>
                     <th className="p-3 text-left">Unit Price</th>
                     <th className="p-3 text-left">Total Cost</th>
                   </tr>
@@ -1559,7 +1557,6 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   <tr className="bg-blue-600 text-white">
                     <th className="p-3 text-left">Name</th>
                     <th className="p-3 text-left">Estimated Quantity</th>
-                    <th className="p-3 text-left">Used Quantity</th>
                     <th className="p-3 text-left">Unit Price</th>
                     <th className="p-3 text-left">Total Cost</th>
                   </tr>
