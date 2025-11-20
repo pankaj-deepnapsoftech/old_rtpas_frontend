@@ -911,8 +911,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         Total Cost
                       </label>
                       <input
-                        type="number"
-                        value={totalCost || ""}
+                        type={cookies?.role === "admin" ? "number" : "text"}
+                        value={
+                          cookies?.role === "admin"
+                            ? totalCost || ""
+                            : totalCost
+                            ? "*****"
+                            : ""
+                        }
                         readOnly
                         className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100"
                       />
@@ -1074,8 +1080,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           Unit Cost
                         </label>
                         <input
-                          type="number"
-                          value={finishedGoodUnitCost || ""}
+                          type={cookies?.role === "admin" ? "number" : "text"}
+                          value={
+                            cookies?.role === "admin"
+                              ? finishedGoodUnitCost || ""
+                              : finishedGoodUnitCost
+                              ? "*****"
+                              : ""
+                          }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                         />
@@ -1085,8 +1097,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           Cost
                         </label>
                         <input
-                          type="number"
-                          value={finishedGoodCost || ""}
+                          type={cookies?.role === "admin" ? "number" : "text"}
+                          value={
+                            cookies?.role === "admin"
+                              ? finishedGoodCost || ""
+                              : finishedGoodCost
+                              ? "*****"
+                              : ""
+                          }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                         />
@@ -1290,8 +1308,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Unit Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.unit_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.unit_cost || ""
+                                : material.unit_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
@@ -1302,8 +1326,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Total Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.total_part_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.total_part_cost || ""
+                                : material.total_part_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
@@ -1533,8 +1563,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Unit Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.unit_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.unit_cost || ""
+                                : material.unit_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
@@ -1545,8 +1581,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Total Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.total_part_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.total_part_cost || ""
+                                : material.total_part_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
