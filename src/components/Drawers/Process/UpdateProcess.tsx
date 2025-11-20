@@ -641,10 +641,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (temperatureUnits.some((unit) => unit.value === uom)) return temperatureUnits;
     return [];
   };
-  const getOptionFromValue = (value, options) =>
-    options.find((opt) => opt.value === value) || null;
-  const uom = selectedProducts[0].uom;
-  const filteredOptions = getUnitCategory(uom);
+  // const getOptionFromValue = (value, options) =>
+  //   options.find((opt) => opt.value === value) || null;
+  // const uom = selectedProducts[0].uom;
+  // const filteredOptions = getUnitCategory(uom);
 
   const markProcessDoneHandler = async () => {
     try {

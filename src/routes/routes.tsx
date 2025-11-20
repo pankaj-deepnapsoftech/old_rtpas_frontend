@@ -285,14 +285,14 @@ const routes = [
   //   isSublink: false,
   // },
   {
-    name: "Admin Approval",
+    name: "Control Panel",
     icon: <FaRegCheckCircle />,
     path: "approval",
     element: <Approvals />,
     isSublink: false,
   },
   {
-    name: "User Profile",
+    name: "My Profile",
     icon: <CgProfile />,
     path: "userprofile",
     element: <Userprofile />,
