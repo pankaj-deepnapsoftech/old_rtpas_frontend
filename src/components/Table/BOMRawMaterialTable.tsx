@@ -47,6 +47,10 @@ const statusColorMap = {
   "Inventory Allocated": "bg-purple-100 text-purple-800",
 };
 
+const statusDisplayMap: Record<string, string> = {
+  "raw material approval pending": "raw material request pending",
+};
+
 interface BOMRawMaterialTableProps {
   products: Array<{
     name: string;
@@ -467,10 +471,11 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                             "N/A"
                           );
                         } else if (colId === "status") {
-                          const status = original.bom_status || "N/A";
+                          const statusRaw = original.bom_status || "N/A";
+                          const status = statusDisplayMap[statusRaw] || statusRaw;
 
                           const statusClass =
-                            statusColorMap[status] ||
+                            statusColorMap[statusRaw] ||
                             "bg-gray-200 text-gray-800";
 
                           displayValue = (
@@ -542,53 +547,45 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                             </Button>
                           )}
 
-                          {/* Approve Inventory Button */}
-                          <Button
-                            size="sm"
-                            style={{
-                              backgroundColor:
-                                isApproved ||
-                                original.bom_status !==
-                                  "raw material approval pending" ||
-                                original.isInventoryApprovalClicked
-                                  ? colors.success[700]
-                                  : colors.success[500],
-                              color: colors.text.inverse,
-                              cursor:
-                                isApproved ||
-                                original.bom_status !==
-                                  "raw material approval pending" ||
-                                original.isInventoryApprovalClicked
-                                  ? "not-allowed"
-                                  : "pointer",
-                            }}
-                            _hover={{
-                              bg:
-                                isApproved ||
-                                original.bom_status !==
-                                  "raw material approval pending" ||
-                                original.isInventoryApprovalClicked
-                                  ? colors.success[700]
-                                  : colors.success[600],
-                            }}
-                            onClick={() => {
-                              approveProductHandler(original._id);
-                            }}
-                            leftIcon={<FaCheckCircle />}
-                            disabled={
+                          {/* Accept Raw Material Request Button */}
+                          {(() => {
+                            const isAcceptDisabled =
                               isApproved ||
                               original.bom_status !==
                                 "raw material approval pending" ||
-                              original.isInventoryApprovalClicked
-                            }
-                          >
-                            {isApproved ||
-                            original.bom_status !==
-                              "raw material approval pending" ||
-                            original.isInventoryApprovalClicked
-                              ? "Approved"
-                              : "Approve"}
-                          </Button>
+                              original.isInventoryApprovalClicked;
+
+                            const acceptButtonLabel = isAcceptDisabled
+                              ? "Accepted"
+                              : "Accept Request";
+
+                            return (
+                              <Button
+                                size="sm"
+                                style={{
+                                  backgroundColor: isAcceptDisabled
+                                    ? colors.success[700]
+                                    : colors.success[500],
+                                  color: colors.text.inverse,
+                                  cursor: isAcceptDisabled
+                                    ? "not-allowed"
+                                    : "pointer",
+                                }}
+                                _hover={{
+                                  bg: isAcceptDisabled
+                                    ? colors.success[700]
+                                    : colors.success[600],
+                                }}
+                                onClick={() => {
+                                  approveProductHandler(original._id);
+                                }}
+                                leftIcon={<FaCheckCircle />}
+                                disabled={isAcceptDisabled}
+                              >
+                                {acceptButtonLabel}
+                              </Button>
+                            );
+                          })()}
 
                           {/* Out Allotted Inventory Button */}
                           {/* {original.bom_status === "request for allow inventory" && (
