@@ -359,11 +359,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       tonne: 1_000_000,
       ton: 907_184.74, // US ton
       lt: 1_016_046.91, // Long ton UK
+
       st: 6350.29318,
       ct: 0.2, // Carat
       gr: 0.06479891, // Grain
     },
-
     // base: millilitres
     liquid: {
       ml: 1,
@@ -380,7 +380,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       barrel: 158_987.294928, // US oil barrel in ml
       cc: 1, // cubic centimeter = 1 ml
     },
-
     // base: cubic meter
     gas: {
       m3: 1,
@@ -392,7 +391,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       Nm3: 1, // same as m3
       scf: 0.028316846592,
     },
-
     // base: pascal
     pressure: {
       pa: 1,
@@ -402,12 +400,13 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       mb: 100,
       hpa: 100,
       atm: 101_325,
+      bar: 100000,
+      atm: 101325,
       psi: 6894.757293168,
       mmHg: 133.3223684211,
       inHg: 3386.38815789,
       torr: 133.3223684211,
     },
-
     // base: meter
     length: {
       mm: 0.001,
@@ -452,8 +451,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       f: null, // needs formula: K = (F - 32) * 5/9 + 273.15
       k: 1,
     },
-
-    // count units (base 1)
+    // count units (no conversion)
     count: {
       pcs: 1,
       nos: 1,
@@ -477,7 +475,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     },
   };
 
-
   const detectCategoryKey = (uom: string): string | null => {
     if (UNIT_FACTORS.mass[uom] !== undefined) return "mass";
     if (UNIT_FACTORS.liquid[uom] !== undefined) return "liquid";
@@ -490,7 +487,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (UNIT_FACTORS.count[uom] !== undefined) return "count";
     return null;
   };
-
 
   const convertUOM = (value: number, fromUom: string, toUom: string) => {
     if (!fromUom || !toUom || fromUom === toUom) return value;
@@ -547,6 +543,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "m3", label: "Cubic Meter" },
     { value: "cm3", label: "Cubic Centimeter" },
     { value: "cf", label: "Cubic Feet" },
+    // { value: "in3", label: "Cubic Inch" },
     { value: "ft3", label: "Cubic Foot" },
     { value: "in3", label: "Cubic Inch" },
     { value: "L", label: "Litre (for gases)" },
@@ -614,8 +611,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "sqft", label: "Square Foot" },
     { value: "acre", label: "Acre" },
     { value: "ha", label: "Hectare" },
+    { value: "roll", label: "Roll" },
   ];
-
   const energyUnits = [
     { value: "j", label: "Joule" },
     { value: "kj", label: "Kilojoule" },
@@ -631,7 +628,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "k", label: "Kelvin" },
   ];
 
-
   // 2. Function to find category by uom value
   const getUnitCategory = (uom) => {
     if (massUnits.some((unit) => unit.value === uom)) return massUnits;
@@ -640,7 +636,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (pressureUnits.some((unit) => unit.value === uom)) return pressureUnits;
     if (lengthUnits.some((unit) => unit.value === uom)) return lengthUnits;
     if (countUnits.some((unit) => unit.value === uom)) return countUnits;
-    if (areaUnits.some((unit) => unit.value === uom)) return areaUnits;
+     if (areaUnits.some((unit) => unit.value === uom)) return areaUnits;
     if (energyUnits.some((unit) => unit.value === uom)) return energyUnits;
     if (temperatureUnits.some((unit) => unit.value === uom)) return temperatureUnits;
     return [];
