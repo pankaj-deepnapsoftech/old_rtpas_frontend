@@ -292,7 +292,7 @@ const routes = [
     isSublink: false,
   },
   {
-    name: "User Profile",
+    name: "My Profile",
     icon: <CgProfile />,
     path: "userprofile",
     element: <Userprofile />,
