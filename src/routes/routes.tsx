@@ -285,7 +285,7 @@ const routes = [
   //   isSublink: false,
   // },
   {
-    name: "Admin Approval",
+    name: "Control Panel",
     icon: <FaRegCheckCircle />,
     path: "approval",
     element: <Approvals />,
