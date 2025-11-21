@@ -113,7 +113,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     []
   );
   const [showMarkAsDone, setShowMarkAsDone] = useState(false);
-
+  console.log(showMarkAsDone)
   const [scrapMaterials, setScrapMaterials] = useState<any[]>([
     {
       _id: "",
@@ -137,12 +137,12 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     const fgProduced = Number(finishedGoodProducedQuantity ?? 0);
     const fgOk = fgEstimated === fgProduced && fgEstimated > 0; // must be non-zero and equal
 
-    // 2. Raw materials check - use current selectedProducts state
-    const rawOk = selectedProducts.every((rm: any) => {
-      const est = Number(rm?.estimated_quantity) || 0;
-      const used = Number(rm?.used_quantity) || 0;
-      return est === used && est > 0; // must be non-zero and equal
-    });
+    // // 2. Raw materials check - use current selectedProducts state
+    // const rawOk = selectedProducts.every((rm: any) => {
+    //   const est = Number(rm?.estimated_quantity) || 0;
+    //   const used = Number(rm?.used_quantity) || 0;
+    //   return est === used && est > 0; // must be non-zero and equal
+    // });
 
     // 3. All processes done - use current processStatuses state
     const allProcessesDone = Object.values(processStatuses).every(
@@ -163,10 +163,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       })
     );
 
-    return fgOk && rawOk && allProcessesDone && hasServerUpdatedData;
+    return fgOk && allProcessesDone && hasServerUpdatedData;
   };
 
-  console.log(computeMarkAsDone());
+  // console.log(computeMarkAsDone());
   const onFinishedGoodChangeHandler = (d: any) => {
     setFinishedGood(d);
     const product: any = products.filter((prd: any) => prd._id === d.value)[0];
@@ -248,7 +248,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
         remaining_quantity: est - usedInItemUom,
       };
     });
-
+    console.log(submitBtnText)
     const updatedFinishedGoodRemaining =
       (Number(finishedGoodQuantity) || 0) -
       (Number(finishedGoodProducedQuantity) || 0);
@@ -314,7 +314,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     try {
       setIsUpdating(true);
       const response = await updateProcess(data).unwrap();
-      console.log(response);
+      // console.log(response);
       if (!response.success) {
         throw new Error(response.message);
       }
@@ -334,7 +334,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
 
       closeDrawerHandler();
       fetchProcessHandler();
-      console.log("1", computeMarkAsDone());
+      // console.log("1", computeMarkAsDone());
       setShowMarkAsDone(computeMarkAsDone());
     } catch (error: any) {
       toast.error(error?.message || "Something went wrong");
@@ -636,7 +636,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (pressureUnits.some((unit) => unit.value === uom)) return pressureUnits;
     if (lengthUnits.some((unit) => unit.value === uom)) return lengthUnits;
     if (countUnits.some((unit) => unit.value === uom)) return countUnits;
-     if (areaUnits.some((unit) => unit.value === uom)) return areaUnits;
+    if (areaUnits.some((unit) => unit.value === uom)) return areaUnits;
     if (energyUnits.some((unit) => unit.value === uom)) return energyUnits;
     if (temperatureUnits.some((unit) => unit.value === uom)) return temperatureUnits;
     return [];
@@ -682,11 +682,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     const fgOk = fgEstimated === fgProduced && fgEstimated > 0;
 
     // 2. Raw materials check
-    const rawOk = rawMaterials.every((rm: any) => {
-      const est = Number(rm?.estimated_quantity) || 0;
-      const used = Number(rm?.used_quantity) || 0;
-      return est === used && est > 0;
-    });
+    // const rawOk = rawMaterials?.every((rm: any) => {
+    //   const est = Number(rm?.estimated_quantity) || 0;
+    //   const used = Number(rm?.used_quantity) || 0;
+    //   return est === used && est > 0;
+    // });
 
     // 3. All processes done
     const allProcessesDone = Object.values(processStatuses).every(
@@ -697,15 +697,15 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     const hasServerUpdatedData = Boolean(
       fgEstimated !== undefined &&
       fgProduced !== undefined &&
-      fgEstimated === fgProduced &&
-      rawMaterials.every((rm: any) => {
-        const est = Number(rm?.estimated_quantity) || 0;
-        const used = Number(rm?.used_quantity) || 0;
-        return est === used && est > 0;
-      })
+      fgEstimated === fgProduced 
+      // rawMaterials.every((rm: any) => {
+      //   const est = Number(rm?.estimated_quantity) || 0;
+      //   const used = Number(rm?.used_quantity) || 0;
+      //   return est === used && est > 0;
+      // })
     );
 
-    return fgOk && rawOk && allProcessesDone && hasServerUpdatedData;
+    return fgOk && allProcessesDone && hasServerUpdatedData;
   };
 
   const fetchProcessDetailsHandler = async (id: string) => {
@@ -722,7 +722,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       );
       const data = await response.json();
 
-      console.log("main data carrier : ", data);
+      // console.log("main data carrier : ", data);
 
       if (!data.success) {
         throw new Error(data.message);
@@ -867,7 +867,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
         setIsCompleted(true);
       } else if (fetchedStatus === "raw material approval pending") {
         setRawMaterialApprovalPending(true);
-      }
+      } 
 
       // Use setTimeout to ensure state updates are applied before computing
       setTimeout(() => {
@@ -1134,8 +1134,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           }}
                           placeholder="Produced Quantity"
                           className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : ""
                             }`}
                           disabled={finishedGoodUnchangedAndEqual}
                         />
@@ -1174,8 +1174,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           }
                           placeholder="Comments"
                           className={`w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 ${finishedGoodUnchangedAndEqual
-                              ? "cursor-not-allowed"
-                              : ""
+                            ? "cursor-not-allowed"
+                            : ""
                             }`}
                           readOnly
                           disabled={finishedGoodUnchangedAndEqual}
@@ -1324,8 +1324,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             }}
                             placeholder="Used Quantity"
                             className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
                               }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           />
@@ -1345,8 +1345,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                               setSelectedProducts(newMaterials);
                             }}
                             className={`w-full h-8 px-2 py-1 text-sm border border-gray-300 rounded ${finishedGoodUnchangedAndEqual
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
                               }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           >
@@ -1440,10 +1440,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                     <div key={index} className="w-[280px]">
                       <div
                         className={`border p-3 rounded-lg ${status?.done
-                            ? "bg-green-50 border-green-200"
-                            : status?.start
-                              ? "bg-blue-50 border-blue-200"
-                              : "bg-gray-50 border-gray-200"
+                          ? "bg-green-50 border-green-200"
+                          : status?.start
+                            ? "bg-blue-50 border-blue-200"
+                            : "bg-gray-50 border-gray-200"
                           }`}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -1452,10 +1452,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           </label>
                           <div
                             className={`px-2 py-1 rounded text-xs  font-medium ${status?.done
-                                ? "bg-green-100 text-green-800"
-                                : status?.start
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-gray-100 text-gray-600"
+                              ? "bg-green-100 text-green-800"
+                              : status?.start
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-600"
                               }`}
                           >
                             {status?.done
@@ -1485,8 +1485,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             onChange={(e) => handleDoneChange(e.target.value)}
                             placeholder="Enter work done (e.g. 50% completed, 20 pcs)"
                             className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
                               }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           />
@@ -1615,8 +1615,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             }}
                             placeholder="Produced Quantity"
                             className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
                               }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           />
@@ -1675,10 +1675,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                       }
                       type="submit"
                       className={`px-6 py-2 rounded transition-colors duration-200 ${isCompleted ||
-                          rawMaterialApprovalPending ||
-                          finishedGoodUnchangedAndEqual
-                          ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                          : "bg-gradient-to-r from-blue-500 to-blue-500 text-white"
+                        rawMaterialApprovalPending ||
+                        finishedGoodUnchangedAndEqual
+                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-500 to-blue-500 text-white"
                         }`}
                     >
                       {isUpdating ? "Updating..." : submitBtnText}
@@ -1692,11 +1692,10 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         // }
                         type="button"
                         onClick={markProcessDoneHandler}
-                        className={`px-6 py-2 rounded transition-colors duration-200 ${isCompleted ||
-                            rawMaterialApprovalPending ||
-                            finishedGoodUnchangedAndEqual
-                            ? "bg-gradient-to-r from-green-500 to-green-500 text-white"
-                            : "bg-gradient-to-r from-green-500 to-green-500 text-white"
+                        className={`px-6 py-2 rounded transition-colors duration-200 ${isCompleted || rawMaterialApprovalPending ||
+                          finishedGoodUnchangedAndEqual
+                          ? "bg-gradient-to-r from-green-500 to-green-500 text-white"
+                          : "bg-gradient-to-r from-green-500 to-green-500 text-white"
                           }`}
                       >
                         {isUpdating ? "Processing..." : "Mark as Done"}
