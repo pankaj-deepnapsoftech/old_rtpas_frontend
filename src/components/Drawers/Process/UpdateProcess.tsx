@@ -153,14 +153,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     // This ensures that the server has confirmed the quantities match
     const hasServerUpdatedData = Boolean(
       originalFinishedGoodEstimated !== undefined &&
-      originalFinishedGoodProduced !== undefined &&
-      Number(originalFinishedGoodEstimated) ===
-      Number(originalFinishedGoodProduced) &&
-      selectedProducts.every((rm: any) => {
-        const est = Number(rm?.estimated_quantity) || 0;
-        const used = Number(rm?.used_quantity) || 0;
-        return est === used && est > 0;
-      })
+        originalFinishedGoodProduced !== undefined &&
+        Number(originalFinishedGoodEstimated) ===
+          Number(originalFinishedGoodProduced) &&
+        selectedProducts.every((rm: any) => {
+          const est = Number(rm?.estimated_quantity) || 0;
+          const used = Number(rm?.used_quantity) || 0;
+          return est === used && est > 0;
+        })
     );
 
     return fgOk && allProcessesDone && hasServerUpdatedData;
@@ -345,15 +345,13 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
   };
 
   // ===== UOM conversion helpers =====
-  const UNIT_FACTORS: Record<string, Record<string, number | null>> = {
+  const UNIT_FACTORS: Record<string, Record<string, number>> = {
     // base: grams
     mass: {
       mg: 0.001,
       cg: 0.01,
       g: 1,
       kgs: 1000,
-      ug: 0.000001,
-      ng: 0.000000001,
       lb: 453.59237,
       oz: 28.349523125,
       tonne: 1_000_000,
@@ -361,15 +359,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       lt: 1_016_046.91, // Long ton UK
 
       st: 6350.29318,
-      ct: 0.2, // Carat
-      gr: 0.06479891, // Grain
     },
     // base: millilitres
     liquid: {
       ml: 1,
       ltr: 1000,
-      dl: 100,
-      kl: 1_000_000,
       gal: 3785.411784,
       qt: 946.352946,
       pt: 473.176473,
@@ -377,8 +371,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       cup: 240,
       tbsp: 15,
       tsp: 5,
-      barrel: 158_987.294928, // US oil barrel in ml
-      cc: 1, // cubic centimeter = 1 ml
     },
     // base: cubic meter
     gas: {
@@ -388,8 +380,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       in3: 1.6387064e-5,
       ft3: 0.028316846592,
       L: 0.001,
-      Nm3: 1, // same as m3
-      scf: 0.028316846592,
     },
     // base: pascal
     pressure: {
@@ -411,11 +401,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     length: {
       mm: 0.001,
       cm: 0.01,
-      dm: 0.1,
       mtr: 1,
       km: 1000,
-      um: 0.000001,
-      nmeter: 0.000000001,
       inch: 0.0254,
       ft: 0.3048,
       yd: 0.9144,
@@ -464,14 +451,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       roll: 1,
       pair: 1,
       sheet: 1,
-      bottle: 1,
-      bag: 1,
-      carton: 1,
-      bundle: 1,
-      case: 1,
-      tray: 1,
-      can: 1,
-      jar: 1,
     },
   };
 
@@ -481,9 +460,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (UNIT_FACTORS.gas[uom] !== undefined) return "gas";
     if (UNIT_FACTORS.pressure[uom] !== undefined) return "pressure";
     if (UNIT_FACTORS.length[uom] !== undefined) return "length";
-    if (UNIT_FACTORS.area[uom] !== undefined) return "area";
-    if (UNIT_FACTORS.energy[uom] !== undefined) return "energy";
-    if (UNIT_FACTORS.temperature[uom] !== undefined) return "temperature";
     if (UNIT_FACTORS.count[uom] !== undefined) return "count";
     return null;
   };
@@ -511,23 +487,15 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "g", label: "Gram" },
     { value: "mg", label: "Milligram" },
     { value: "cg", label: "Centigram" },
-    { value: "ug", label: "Microgram" },
-    { value: "ng", label: "Nanogram" },
     { value: "lb", label: "Pound" },
     { value: "oz", label: "Ounce" },
     { value: "tonne", label: "Tonne" },
-    { value: "ton", label: "Short Ton (US)" },
-    { value: "lt", label: "Long Ton (UK)" },
     { value: "st", label: "Stone" },
-    { value: "ct", label: "Carat" },
-    { value: "gr", label: "Grain" },
   ];
 
   const liquidUnits = [
     { value: "ltr", label: "Litre" },
     { value: "ml", label: "Millilitre" },
-    { value: "dl", label: "Decilitre" },
-    { value: "kl", label: "Kilolitre" },
     { value: "gal", label: "Gallon (US)" },
     { value: "qt", label: "Quart (US)" },
     { value: "pt", label: "Pint (US)" },
@@ -535,8 +503,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "cup", label: "Cup (US)" },
     { value: "tbsp", label: "Tablespoon" },
     { value: "tsp", label: "Teaspoon" },
-    { value: "barrel", label: "Barrel" },
-    { value: "cc", label: "Cubic Centimeter" },
   ];
 
   const gasUnits = [
@@ -546,9 +512,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     // { value: "in3", label: "Cubic Inch" },
     { value: "ft3", label: "Cubic Foot" },
     { value: "in3", label: "Cubic Inch" },
+    { value: "ft3", label: "Cubic Foot" },
     { value: "L", label: "Litre (for gases)" },
-    { value: "Nm3", label: "Normal Cubic Meter" },
-    { value: "scf", label: "Standard Cubic Foot" },
   ];
 
   const pressureUnits = [
@@ -556,8 +521,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "kpa", label: "Kilopascal" },
     { value: "mpa", label: "Megapascal" },
     { value: "bar", label: "Bar" },
-    { value: "mb", label: "Millibar" },
-    { value: "hpa", label: "Hectopascal" },
     { value: "atm", label: "Atmosphere" },
     { value: "psi", label: "Pound per Square Inch" },
     { value: "mmHg", label: "Millimeter of Mercury" },
@@ -568,11 +531,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
   const lengthUnits = [
     { value: "mm", label: "Millimeter" },
     { value: "cm", label: "Centimeter" },
-    { value: "dm", label: "Decimeter" },
     { value: "mtr", label: "Meter" },
     { value: "km", label: "Kilometer" },
-    { value: "um", label: "Micrometer" },
-    { value: "nmeter", label: "Nanometer" },
     { value: "inch", label: "Inch" },
     { value: "ft", label: "Foot" },
     { value: "yd", label: "Yard" },
@@ -592,14 +552,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     { value: "roll", label: "Roll" },
     { value: "pair", label: "Pair" },
     { value: "sheet", label: "Sheet" },
-    { value: "bottle", label: "Bottle" },
-    { value: "bag", label: "Bag" },
-    { value: "carton", label: "Carton" },
-    { value: "bundle", label: "Bundle" },
-    { value: "case", label: "Case" },
-    { value: "tray", label: "Tray" },
-    { value: "can", label: "Can" },
-    { value: "jar", label: "Jar" },
+    { value: "roll", label: "Roll" },
   ];
 
   const areaUnits = [
@@ -651,7 +604,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       setIsUpdating(true);
       const response = await fetch(
         process.env.REACT_APP_BACKEND_URL +
-        `production-process/done/${productionProcessId}`,
+          `production-process/done/${productionProcessId}`,
         {
           headers: {
             Authorization: `Bearer ${cookies?.access_token}`,
@@ -734,8 +687,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       setTotalCost(data.production_process.bom.total_cost);
       setCreatedBy(
         (data.production_process.bom?.creator?.first_name || "") +
-        " " +
-        (data.production_process.bom?.creator?.last_name || "")
+          " " +
+          (data.production_process.bom?.creator?.last_name || "")
       );
 
       const modifiedRawMaterials =
@@ -972,13 +925,13 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
   // AND the values have not been changed since fetch (originals match current)
   const finishedGoodUnchangedAndEqual = Boolean(
     originalFinishedGoodEstimated !== undefined &&
-    originalFinishedGoodProduced !== undefined &&
-    Number(originalFinishedGoodEstimated) ===
-    Number(originalFinishedGoodProduced) &&
-    Number(originalFinishedGoodEstimated) ===
-    Number(finishedGoodQuantity || 0) &&
-    Number(originalFinishedGoodProduced) ===
-    Number(finishedGoodProducedQuantity || 0)
+      originalFinishedGoodProduced !== undefined &&
+      Number(originalFinishedGoodEstimated) ===
+        Number(originalFinishedGoodProduced) &&
+      Number(originalFinishedGoodEstimated) ===
+        Number(finishedGoodQuantity || 0) &&
+      Number(originalFinishedGoodProduced) ===
+        Number(finishedGoodProducedQuantity || 0)
   );
   return (
     <>
@@ -1025,8 +978,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         Total Cost
                       </label>
                       <input
-                        type="number"
-                        value={totalCost || ""}
+                        type={cookies?.role === "admin" ? "number" : "text"}
+                        value={
+                          cookies?.role === "admin"
+                            ? totalCost || ""
+                            : totalCost
+                            ? "*****"
+                            : ""
+                        }
                         readOnly
                         className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100"
                       />
@@ -1186,8 +1145,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           Unit Cost
                         </label>
                         <input
-                          type="number"
-                          value={finishedGoodUnitCost || ""}
+                          type={cookies?.role === "admin" ? "number" : "text"}
+                          value={
+                            cookies?.role === "admin"
+                              ? finishedGoodUnitCost || ""
+                              : finishedGoodUnitCost
+                              ? "*****"
+                              : ""
+                          }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                         />
@@ -1197,8 +1162,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           Cost
                         </label>
                         <input
-                          type="number"
-                          value={finishedGoodCost || ""}
+                          type={cookies?.role === "admin" ? "number" : "text"}
+                          value={
+                            cookies?.role === "admin"
+                              ? finishedGoodCost || ""
+                              : finishedGoodCost
+                              ? "*****"
+                              : ""
+                          }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                         />
@@ -1400,8 +1371,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Unit Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.unit_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.unit_cost || ""
+                                : material.unit_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
@@ -1412,8 +1389,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Total Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.total_part_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.total_part_cost || ""
+                                : material.total_part_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
@@ -1461,8 +1444,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             {status?.done
                               ? "Completed"
                               : status?.start
-                                ? "In Progress"
-                                : "Not Start"}
+                              ? "In Progress"
+                              : "Not Start"}
                           </div>
                         </div>
 
@@ -1639,8 +1622,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Unit Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.unit_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.unit_cost || ""
+                                : material.unit_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
@@ -1651,8 +1640,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             Total Cost
                           </label>
                           <input
-                            type="number"
-                            value={material.total_part_cost || ""}
+                            type={cookies?.role === "admin" ? "number" : "text"}
+                            value={
+                              cookies?.role === "admin"
+                                ? material.total_part_cost || ""
+                                : material.total_part_cost
+                                ? "*****"
+                                : ""
+                            }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
