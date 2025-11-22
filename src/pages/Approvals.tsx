@@ -63,6 +63,13 @@ const Approvals: React.FC = () => {
   const [filteredBomRMs, setFilteredBomRMs] = useState<any>([]);
   const [isLoadingBomRMs, setIsLoadingBomRMs] = useState<boolean>(false);
 
+  //  Sales (Unapproved)
+  const [salesSearchKey, setSalesSearchKey] = useState<string | undefined>();
+  const [sales, setSales] = useState<any>([]);
+  const [filteredSales, setFilteredSales] = useState<any>([]);
+  const [isLoadingSales, setIsLoadingSales] = useState<boolean>(false);
+  const [selectedSales, setSelectedSales] = useState<string[]>([]);
+
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteStore] = useDeleteStoresMutation();
@@ -471,6 +478,73 @@ const Approvals: React.FC = () => {
     }
   };
 
+  // For Unapproved Sales
+  const fetchUnapprovedSalesHandler = async () => {
+    try {
+      setIsLoadingSales(true);
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + "sale/unapproved",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      setSales(rows);
+      setFilteredSales(rows);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Something went wrong");
+    } finally {
+      setIsLoadingSales(false);
+    }
+  };
+
+  const approveSaleHandler = async (id: string) => {
+    try {
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `sale/approve/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data?.message || "Failed");
+      toast.success(data?.message || "Sale approved");
+      fetchUnapprovedSalesHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveSalesHandler = async (ids: string[]) => {
+    try {
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `sale/bulk-approve`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ids }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data?.message || "Failed");
+      toast.success(data?.message || `Approved ${ids.length} sale(s)`);
+      setSelectedSales([]);
+      fetchUnapprovedSalesHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   useEffect(() => {
     fetchUnapprovedProductsHandler();
     fetchUnapprovedStoresHandler();
@@ -478,6 +552,7 @@ const Approvals: React.FC = () => {
     fetchUnapprovedSellersHandler();
     fetchUnapprovedBomsHandler();
     fetchUnapprovedBomRMsHandler();
+    fetchUnapprovedSalesHandler();
   }, []);
 
 
@@ -659,6 +734,21 @@ const Approvals: React.FC = () => {
     setFilteredBoms(results);
   }, [bomSearchKey]);
 
+  // Sales Search
+  useEffect(() => {
+    const searchTxt = salesSearchKey?.toLowerCase();
+    const results = sales.filter((s: any) =>
+      (s?.order_id?.toLowerCase()?.includes(searchTxt)) ||
+      (s?.party?.company_name?.toLowerCase()?.includes(searchTxt)) ||
+      (Array.isArray(s?.product_id) && s?.product_id[0]?.name?.toLowerCase()?.includes(searchTxt)) ||
+      (s?.product_qty?.toString()?.includes(searchTxt)) ||
+      (s?.price?.toString()?.includes(searchTxt)) ||
+      (s?.GST?.toString()?.includes(searchTxt)) ||
+      (s?.createdAt && new Date(s?.createdAt)?.toISOString()?.substring(0,10)?.split("-")?.reverse()?.join("")?.includes(searchTxt?.replaceAll("/", "") || ""))
+    );
+    setFilteredSales(results);
+  }, [salesSearchKey]);
+
   if (!isAllowed) {
     return (
       <div className="text-center text-red-500">
@@ -674,6 +764,7 @@ const Approvals: React.FC = () => {
     { id: "sellers", label: "Suppliers" },
     { id: "boms", label: "BOMs" },
     { id: "bomRMs", label: "BOM Raw Materials" },
+    { id: "sales", label: "Sales" },
   ];
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.background.page }}>
@@ -1160,12 +1251,150 @@ const Approvals: React.FC = () => {
               </div>
             </div>
 
-            <div className="overflow-hidden">
+              <div className="overflow-hidden">
               <BOMRawMaterialTable
                 isLoadingProducts={isLoadingBomRMs}
                 products={filteredBomRMs}
                 approveProductHandler={approveBomRMHandler}
               />
+              </div>
+            </div>
+          )}
+
+        {activeSection === "sales" && (
+          <div
+            className="rounded-xl shadow-sm border border-gray-100 mb-6"
+            style={{
+              backgroundColor: colors.background.card,
+              borderColor: colors.border.light,
+            }}
+          >
+            <div className="p-6 border-b" style={{ borderColor: colors.border.light }}>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>
+                    Sales for Approval
+                  </h2>
+                  <p className="text-sm mt-1" style={{ color: colors.text.secondary }}>
+                    Review and approve pending sales orders
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative">
+                    <FiSearch
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                      style={{ color: colors.text.secondary }}
+                    />
+                    <input
+                      className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-3 transition-colors"
+                      style={{
+                        backgroundColor: colors.input.background,
+                        borderColor: colors.input.border,
+                        color: colors.text.primary,
+                      }}
+                      placeholder="Search sales..."
+                      value={salesSearchKey || ""}
+                      onChange={(e) => setSalesSearchKey(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={fetchUnapprovedSalesHandler}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
+                    style={{
+                      borderColor: colors.border.medium,
+                      color: colors.text.primary,
+                      backgroundColor: colors.background.card,
+                    }}
+                  >
+                    <MdOutlineRefresh size="16px" />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {selectedSales.length > 0 && (
+              <div className="flex items-center gap-3 px-6 pt-4">
+                <Button
+                  size="sm"
+                  style={{ backgroundColor: colors.success[600], color: colors.text.inverse }}
+                  _hover={{ bg: colors.success[700] }}
+                  onClick={() => bulkApproveSalesHandler(selectedSales)}
+                >
+                  Approve Selected ({selectedSales.length})
+                </Button>
+                <Button size="sm" onClick={() => setSelectedSales([])}>Clear Selection</Button>
+              </div>
+            )}
+
+            <div className="overflow-hidden">
+              <div className="max-h-[600px] overflow-y-auto">
+                <table className="min-w-full">
+                  <thead style={{ backgroundColor: colors.table.header }}>
+                    <tr>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredSales.length > 0 && selectedSales.length === filteredSales.length}
+                          ref={(el) => {
+                            if (el) (el as any).indeterminate = selectedSales.length > 0 && selectedSales.length < filteredSales.length;
+                          }}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedSales(filteredSales.map((s: any) => s._id));
+                            else setSelectedSales([]);
+                          }}
+                        />
+                      </th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Order ID</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Party</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Product</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Qty</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Price</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>GST</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoadingSales ? (
+                      <tr><td className="px-4 py-4" colSpan={8}>Loading...</td></tr>
+                    ) : filteredSales.length === 0 ? (
+                      <tr><td className="px-4 py-4" colSpan={8}>No pending sales</td></tr>
+                    ) : (
+                      filteredSales.map((row: any, index: number) => (
+                        <tr
+                          key={row._id}
+                          style={{
+                            backgroundColor:
+                              index % 2 === 0
+                                ? colors.background.card
+                                : colors.table.stripe,
+                          }}
+                        >
+                          <td className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedSales.includes(row._id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedSales((prev) => [...prev, row._id]);
+                                else setSelectedSales((prev) => prev.filter((x) => x !== row._id));
+                              }}
+                            />
+                          </td>
+                          <td className="px-4 py-3">{row.order_id}</td>
+                          <td className="px-4 py-3">{row?.party?.company_name || "-"}</td>
+                          <td className="px-4 py-3">{Array.isArray(row?.product_id) ? row?.product_id[0]?.name : "-"}</td>
+                          <td className="px-4 py-3">{row.product_qty}</td>
+                          <td className="px-4 py-3">{row.price}</td>
+                          <td className="px-4 py-3">{row.GST}</td>
+                          <td className="px-4 py-3">
+                            <Button size="sm" onClick={() => approveSaleHandler(row._id)}>Approve</Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

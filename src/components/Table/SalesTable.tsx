@@ -591,12 +591,25 @@ const SalesTable = ({
               {/* Sale Header */}
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
                 <div>
-                  <h3
-                    className="text-lg font-semibold"
-                    style={{ color: colors.text.primary }}
-                  >
-                    Order Id : {purchase.order_id}
-                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3
+                      className="text-lg font-semibold"
+                      style={{ color: colors.text.primary }}
+                    >
+                      Order Id : {purchase.order_id}
+                    </h3>
+                    {purchase.approved !== undefined && (
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          purchase.approved
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {purchase.approved ? "✓ Approved" : "⏳ Pending Approval"}
+                      </span>
+                    )}
+                  </div>
                   <p
                     className="text-sm mt-1"
                     style={{ color: colors.text.secondary }}
