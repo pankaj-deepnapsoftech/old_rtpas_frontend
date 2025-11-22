@@ -1165,7 +1165,6 @@ const Approvals: React.FC = () => {
                 isLoadingProducts={isLoadingBomRMs}
                 products={filteredBomRMs}
                 approveProductHandler={approveBomRMHandler}
-                bulkApproveBomRMHandler={bulkApproveBomRMHandler}
               />
             </div>
           </div>

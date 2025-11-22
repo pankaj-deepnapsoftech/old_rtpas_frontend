@@ -13,7 +13,7 @@ import {
   Toast,
 } from "@chakra-ui/react";
 import moment from "moment";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   FaCaretDown,
   FaCaretUp,
@@ -291,17 +291,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
     return index % 2 !== 0 ? colors.table.stripe : colors.background.card;
   };
 
-  const [selectedRMs, setSelectedRMs] = useState<string[]>([]);
-  const isAllSelected = page.length > 0 && selectedRMs.length === page.length;
-  const isIndeterminate = selectedRMs.length > 0 && selectedRMs.length < page.length;
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedRMs(page.map((row: any) => row.original?._id));
-    else setSelectedRMs([]);
-  };
-  const handleSelectOne = (id: string, checked: boolean) => {
-    if (checked) setSelectedRMs((prev) => [...prev, id]);
-    else setSelectedRMs((prev) => prev.filter((x) => x !== id));
-  };
+  
 
   if (isLoadingProducts) {
     return <Loading />;
@@ -342,25 +332,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
             </Select>
           </div>
 
-          {selectedRMs.length > 0 && (
-            <div className="flex items-center gap-3 mb-3">
-              <button
-                onClick={() => {
-                  if (bulkApproveBomRMHandler) bulkApproveBomRMHandler(selectedRMs);
-                  else if (approveProductHandler) selectedRMs.forEach((id) => approveProductHandler(id));
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                Accept Selected ({selectedRMs.length})
-              </button>
-              <button
-                onClick={() => setSelectedRMs([])}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                Clear Selection
-              </button>
-            </div>
-          )}
+          
 
           {/* Table */}
           <TableContainer
@@ -382,26 +354,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
               >
               {headerGroups.map((hg: HeaderGroup<any>) => (
                 <Tr {...hg.getHeaderGroupProps()}>
-                  <Th
-                    style={{
-                      color: colors.table.headerText,
-                      borderColor: colors.table.border,
-                    }}
-                    fontSize="sm"
-                    fontWeight="semibold"
-                    textTransform="capitalize"
-                    py={4}
-                    px={4}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isAllSelected}
-                      ref={(el) => {
-                        if (el) (el as any).indeterminate = isIndeterminate;
-                      }}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                    />
-                  </Th>
+                  
                   {hg?.headers.map((column: any) => (
                     <Th
                         {...column.getHeaderProps(
@@ -459,17 +412,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                       }}
                       _hover={{ bg: colors.table.hover }}
                     >
-                      <Td
-                        style={{ borderColor: colors.table.border }}
-                        py={3}
-                        px={4}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedRMs.includes(original._id)}
-                          onChange={(e) => handleSelectOne(original._id, e.target.checked)}
-                        />
-                      </Td>
+                      
                       {row.cells.map((cell: Cell) => {
                         const colId = cell.column.id;
                         let displayValue;
