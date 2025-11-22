@@ -21,7 +21,7 @@ import {
   HeaderGroup,
   Cell,
 } from "react-table";
-import { FaCaretDown, FaCaretUp, FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { FaCaretDown, FaCaretUp, FaEdit, FaTrash, FaEye, FaCheckCircle } from "react-icons/fa";
 import moment from "moment";
 import Loading from "../../ui/Loading";
 import EmptyData from "../../ui/emptyData";
@@ -44,6 +44,8 @@ interface StoreTableProps {
   openUpdateStoreDrawerHandler?: (id: string) => void;
   openStoreDetailsDrawerHandler?: (id: string) => void;
   deleteStoreHandler?: (id: string) => void;
+  approveStoreHandler?: (id: string) => void;
+  bulkApproveStoresHandler?: (ids: string[]) => void;
 }
 
 const StoreTable: React.FC<StoreTableProps> = ({
@@ -52,7 +54,11 @@ const StoreTable: React.FC<StoreTableProps> = ({
   openUpdateStoreDrawerHandler,
   openStoreDetailsDrawerHandler,
   deleteStoreHandler,
+  approveStoreHandler,
+  bulkApproveStoresHandler,
 }) => {
+  const dataStores = Array.isArray(stores) ? stores : [];
+  const memoStores = useMemo(() => dataStores, [stores]);
   const {
     isOpen: isDeleteModalOpen,
     onOpen: onDeleteModalOpen,
@@ -90,7 +96,7 @@ const StoreTable: React.FC<StoreTableProps> = ({
   }: TableInstance<any> = useTable(
     {
       columns,
-      data: stores,
+      data: memoStores,
       initialState: { pageIndex: 0, pageSize: 10 },
     },
     useSortBy,
@@ -110,11 +116,23 @@ const StoreTable: React.FC<StoreTableProps> = ({
     onDeleteModalClose();
   };
 
+  const [selectedStores, setSelectedStores] = React.useState<string[]>([]);
+  const isAllSelected = page.length > 0 && selectedStores.length === page.length;
+  const isIndeterminate = selectedStores.length > 0 && selectedStores.length < page.length;
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedStores(page.map((row: any) => row.original._id));
+    else setSelectedStores([]);
+  };
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) setSelectedStores((prev) => [...prev, id]);
+    else setSelectedStores((prev) => prev.filter((x) => x !== id));
+  };
+
   if (isLoadingStores) {
     return <Loading />;
   }
 
-  if (!isLoadingStores && stores.length === 0) {
+  if (!isLoadingStores && dataStores.length === 0) {
     return <EmptyData />;
   }
 
@@ -152,6 +170,20 @@ const StoreTable: React.FC<StoreTableProps> = ({
         </Select>
       </div>
 
+      {selectedStores.length > 0 && (
+        <div className="flex items-center gap-3 mb-3">
+          <Button
+            size="sm"
+            style={{ backgroundColor: colors.success[600], color: colors.text.inverse }}
+            _hover={{ bg: colors.success[700] }}
+            onClick={() => bulkApproveStoresHandler && bulkApproveStoresHandler(selectedStores)}
+          >
+            Approve Selected ({selectedStores.length})
+          </Button>
+          <Button size="sm" onClick={() => setSelectedStores([])}>Clear Selection</Button>
+        </div>
+      )}
+
       {/* Table */}
       <TableContainer
         style={{
@@ -172,6 +204,26 @@ const StoreTable: React.FC<StoreTableProps> = ({
           >
             {headerGroups.map((hg: HeaderGroup<any>) => (
               <Tr {...hg.getHeaderGroupProps()}>
+                <Th
+                  style={{
+                    color: colors.table.headerText,
+                    borderColor: colors.table.border,
+                  }}
+                  fontSize="sm"
+                  fontWeight="semibold"
+                  textTransform="none"
+                  py={4}
+                  px={4}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) (el as any).indeterminate = isIndeterminate;
+                    }}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </Th>
                 {hg.headers.map((column: any) => (
                   <Th
                     {...column.getHeaderProps(column.getSortByToggleProps())}
@@ -229,6 +281,17 @@ const StoreTable: React.FC<StoreTableProps> = ({
                   }}
                   _hover={{ bg: colors.table.hover }}
                 >
+                  <Td
+                    style={{ borderColor: colors.table.border }}
+                    py={3}
+                    px={4}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedStores.includes(row.original._id)}
+                      onChange={(e) => handleSelectOne(row.original._id, e.target.checked)}
+                    />
+                  </Td>
                   {row.cells.map((cell: Cell) => {
                     const colId = cell.column.id;
                     const original = row.original;
@@ -299,6 +362,20 @@ const StoreTable: React.FC<StoreTableProps> = ({
                     px={4}
                   >
                     <div className="flex items-center gap-2">
+                      {approveStoreHandler && !row.original.approved && (
+                        <Button
+                          size="sm"
+                          style={{
+                            color: colors.success[700],
+                            backgroundColor: colors.success[100],
+                          }}
+                          _hover={{ bg: colors.success[200] }}
+                          onClick={() => approveStoreHandler(row.original._id)}
+                          title="Approve store"
+                        >
+                          <FaCheckCircle size={16} />
+                        </Button>
+                      )}
                       {openStoreDetailsDrawerHandler && (
                         <Button
                           size="sm"
@@ -352,6 +429,7 @@ const StoreTable: React.FC<StoreTableProps> = ({
           </Tbody>
         </Table>
       </TableContainer>
+
 
       {/* Pagination */}
       <div className="flex items-center justify-center gap-4">

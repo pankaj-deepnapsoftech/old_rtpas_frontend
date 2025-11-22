@@ -2,7 +2,7 @@
 
 import { Select, Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/react";
 import moment from "moment";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 import { FcApproval } from "react-icons/fc";
 import { usePagination, useSortBy, useTable } from "react-table";
@@ -24,6 +24,7 @@ interface EmployeeTableProps {
   openEmployeeDetailsDrawerHandler?: (id: string) => void;
   deleteEmployeeHandler?: (id: string) => void;
   approveEmployeeHandler?: (id: string) => void;
+  bulkApproveEmployeesHandler?: (ids: string[]) => void;
 }
 
 const EmployeeTable: React.FC<EmployeeTableProps> = ({
@@ -33,6 +34,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   openEmployeeDetailsDrawerHandler,
   deleteEmployeeHandler,
   approveEmployeeHandler,
+  bulkApproveEmployeesHandler,
 }) => {
 
   const columns = useMemo(
@@ -79,6 +81,18 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     useSortBy,
     usePagination
   );
+
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const isAllSelected = page.length > 0 && selectedEmployees.length === page.length;
+  const isIndeterminate = selectedEmployees.length > 0 && selectedEmployees.length < page.length;
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedEmployees(page.map((row: any) => row.original._id));
+    else setSelectedEmployees([]);
+  };
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) setSelectedEmployees((prev) => [...prev, id]);
+    else setSelectedEmployees((prev) => prev.filter((x) => x !== id));
+  };
 
   return (
     <div className="p-6">
@@ -208,14 +222,34 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                         borderBottom="1px solid"
                         borderColor={colors.table.border}
                       >
+                        <Th
+                          fontSize="14px"
+                          fontWeight="600"
+                          px={4}
+                          py={3}
+                          style={{ width: "40px" }}
+                          position="sticky"
+                          left={0}
+                          zIndex={5}
+                          bg={colors.table.header}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isAllSelected}
+                            ref={(el) => {
+                              if (el) (el as any).indeterminate = isIndeterminate;
+                            }}
+                            onChange={(e) => handleSelectAll(e.target.checked)}
+                          />
+                        </Th>
                         {hg.headers.map((column) => (
                           <Th
                             {...column.getHeaderProps(column.getSortByToggleProps())}
                             fontSize="14px"
                             fontWeight="600"
-                            position={column.id === "first_name" ? "sticky" : "sticky"} // keep all headers sticky
+                            position={column.id === "first_name" ? "sticky" : "sticky"}
                             top={0}
-                            left={column.id === "first_name" ? 0 : undefined}
+                            left={column.id === "first_name" ? 40 : undefined}
                             zIndex={column.id === "first_name" ? 4 : 3}
                             bg={colors.table.header}
                           >
@@ -262,12 +296,27 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                           borderBottom="1px solid"
                           borderColor={colors.table.border}
                         >
+                          <Td
+                            px={4}
+                            py={3}
+                            style={{ width: "40px" }}
+                            position="sticky"
+                            left={0}
+                            zIndex={2}
+                            bg={dynamicBg(index)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedEmployees.includes(row.original._id)}
+                              onChange={(e) => handleSelectOne(row.original._id, e.target.checked)}
+                            />
+                          </Td>
                           {row.cells.map((cell) => (
                             <Td
                               {...cell.getCellProps()}
                               fontSize="14px"
                               position={cell.column.id === "first_name" ? "sticky" : "static"}
-                              left={cell.column.id === "first_name" ? 0 : undefined}
+                              left={cell.column.id === "first_name" ? 40 : undefined}
                               zIndex={cell.column.id === "first_name" ? 1 : undefined}
                               bg={cell.column.id === "first_name" ? dynamicBg(index) : undefined}
                               px={4}
@@ -504,6 +553,26 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
               </div>
             </div>
           </div>
+
+          {selectedEmployees.length > 0 && (
+            <div className="flex items-center gap-3 px-2 mt-3">
+              <button
+                onClick={() => {
+                  if (bulkApproveEmployeesHandler) bulkApproveEmployeesHandler(selectedEmployees);
+                  else if (approveEmployeeHandler) selectedEmployees.forEach((id) => approveEmployeeHandler(id));
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Approve Selected ({selectedEmployees.length})
+              </button>
+              <button
+                onClick={() => setSelectedEmployees([])}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Clear Selection
+              </button>
+            </div>
+          )}
 
           {/* Enhanced Pagination */}
           <div

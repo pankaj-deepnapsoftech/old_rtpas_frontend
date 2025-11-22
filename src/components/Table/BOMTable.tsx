@@ -47,7 +47,8 @@ interface BOMTableProps {
   openBomDetailsDrawerHandler?: (id: string) => void;
   deleteBomHandler?: (id: string) => void;
   approveBomHandler?: (id: string) => void;
-  refreshBoms?: () => void; // Add refresh function prop
+  refreshBoms?: () => void;
+  bulkApproveBomsHandler?: (ids: string[]) => void;
 }
 
 const BOMTable: React.FC<BOMTableProps> = ({
@@ -58,7 +59,10 @@ const BOMTable: React.FC<BOMTableProps> = ({
   deleteBomHandler,
   approveBomHandler,
   refreshBoms,
+  bulkApproveBomsHandler,
 }) => {
+  const dataBoms = Array.isArray(boms) ? boms : [];
+  const memoBoms = useMemo(() => dataBoms, [boms]);
   const [showDeletePage, setshowDeletePage] = useState(false);
   const [deleteId, setdeleteId] = useState("");
   const [cookies] = useCookies();
@@ -175,7 +179,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
   }> = useTable(
     {
       columns,
-      data: boms,
+      data: memoBoms,
       initialState: { pageIndex: 0 },
     },
     useSortBy,
@@ -269,7 +273,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
         </div>
       )}
 
-      {!isLoadingBoms && boms.length === 0 && (
+      {!isLoadingBoms && dataBoms.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div
             className="rounded-full p-6 mb-4"
@@ -303,7 +307,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
         </div>
       )}
 
-      {!isLoadingBoms && boms.length > 0 && (
+      {!isLoadingBoms && dataBoms.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-6">
@@ -312,7 +316,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
                   className="text-lg font-semibold"
                   style={{ color: colors.text.primary }}
                 >
-                  {boms.length} BOM{boms.length !== 1 ? "s" : ""} Found
+                  {dataBoms.length} BOM{dataBoms.length !== 1 ? "s" : ""} Found
                 </h3>
                 {/* {selectedBoms.length > 0 && (
                   <p
@@ -346,6 +350,14 @@ const BOMTable: React.FC<BOMTableProps> = ({
                         />
                       </svg>
                       Delete Selected ({selectedBoms.length})
+                    </button>
+                  )}
+                  {bulkApproveBomsHandler && (
+                    <button
+                      onClick={() => bulkApproveBomsHandler(selectedBoms)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Approve Selected ({selectedBoms.length})
                     </button>
                   )}
                   <button
@@ -411,26 +423,28 @@ const BOMTable: React.FC<BOMTableProps> = ({
                   <tr
                     style={{ borderBottom: `1px solid ${colors.table.border}` }}
                   >
-                    {cookies?.role === "admin" && (
-                      <th
-                        className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
-                        style={{
-                          color: colors.table.headerText,
-                          width: "60px",
-                          minWidth: "60px",
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
+                      style={{
+                        color: colors.table.headerText,
+                        width: "60px",
+                        minWidth: "60px",
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 3,
+                        backgroundColor: colors.table.header,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isIndeterminate;
                         }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isAllSelected}
-                          ref={(el) => {
-                            if (el) el.indeterminate = isIndeterminate;
-                          }}
-                          onChange={(e) => handleSelectAll(e.target.checked)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        />
-                      </th>
-                    )}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                    </th>
                     <th
                       className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
                       style={{ color: colors.table.headerText }}
@@ -500,28 +514,33 @@ const BOMTable: React.FC<BOMTableProps> = ({
                               : colors.table.stripe;
                         }}
                       >
-                        {cookies?.role === "admin" && (
-                          <td
-                            className="px-4 py-3 text-sm whitespace-nowrap"
-                            style={{
-                              color: colors.text.secondary,
-                              width: "60px",
-                              minWidth: "60px",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedBoms.includes(row.original._id)}
-                              onChange={(e) =>
-                                handleSelectBom(
-                                  row.original._id,
-                                  e.target.checked
-                                )
-                              }
-                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                            />
-                          </td>
-                        )}
+                        <td
+                          className="px-4 py-3 text-sm whitespace-nowrap"
+                          style={{
+                            color: colors.text.secondary,
+                            width: "60px",
+                            minWidth: "60px",
+                            position: "sticky",
+                            left: 0,
+                            zIndex: 2,
+                            backgroundColor:
+                              index % 2 === 0
+                                ? colors.background.card
+                                : colors.table.stripe,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBoms.includes(row.original._id)}
+                            onChange={(e) =>
+                              handleSelectBom(
+                                row.original._id,
+                                e.target.checked
+                              )
+                            }
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                        </td>
                         <td
                           className="px-4 py-3 text-sm whitespace-nowrap font-mono"
                           style={{ color: colors.text.secondary }}

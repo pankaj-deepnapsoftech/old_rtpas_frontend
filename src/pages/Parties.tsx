@@ -6,6 +6,7 @@ import { RxCross2 } from "react-icons/rx";
 import AddParties from "../components/Drawers/Parties/AddParties";
 import PartiesTable from "../components/Table/PartiesTable";
 import { useEffect, useState, useRef } from "react";
+import { useSelector } from "react-redux";
 import { useCookies } from "react-cookie";
 import Pagination from "./Pagination";
 import { colors } from "../theme/colors";
@@ -26,6 +27,7 @@ const Parties = () => {
   const [edittable, setEditTable] = useState(null);
   const [limit, setLimit] = useState(10);
   const [isExporting, setIsExporting] = useState(false);
+  const { isSuper } = useSelector((state: any) => state.auth);
 
   // Bulk upload states
   const [showBulkUploadMenu, setShowBulkUploadMenu] = useState(false);
@@ -45,7 +47,8 @@ const Parties = () => {
         }
       );
       const data = await res.json();
-      setPartiesData(data?.data);
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      setPartiesData(isSuper ? rows : rows.filter((p: any) => p.approved === true || p.approved === undefined));
     } catch (error) {
       console.log(error);
     } finally {
@@ -530,4 +533,4 @@ const Parties = () => {
   );
 };
 
-export default Parties; 
+export default Parties;

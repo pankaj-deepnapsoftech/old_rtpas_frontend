@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Cell,
   Column,
@@ -21,6 +21,7 @@ import {
   Th,
   Thead,
   Tr,
+  Button,
 } from "@chakra-ui/react";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 import moment from "moment";
@@ -49,6 +50,7 @@ interface AgentTableProps {
   openAgentDetailsDrawerHandler?: (id: string) => void;
   deleteAgentHandler?: (id: string) => void;
   approveAgentHandler?: (id: string) => void;
+  bulkApproveAgentsHandler?: (ids: string[]) => void;
 }
 
 const AgentTable: React.FC<AgentTableProps> = ({
@@ -58,7 +60,10 @@ const AgentTable: React.FC<AgentTableProps> = ({
   openAgentDetailsDrawerHandler,
   deleteAgentHandler,
   approveAgentHandler,
+  bulkApproveAgentsHandler,
 }) => {
+  const dataAgents = Array.isArray(agents) ? agents : [];
+  const memoAgents = useMemo(() => dataAgents, [agents]);
   const columns = useMemo(
     () => [
       { Header: "Name", accessor: "name" },
@@ -110,24 +115,36 @@ const AgentTable: React.FC<AgentTableProps> = ({
   }> = useTable(
     {
       columns,
-      data: agents,
+      data: memoAgents,
       initialState: { pageIndex: 0 },
     },
     useSortBy,
     usePagination
   );
 
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  const isAllSelected = page.length > 0 && selectedAgents.length === page.length;
+  const isIndeterminate = selectedAgents.length > 0 && selectedAgents.length < page.length;
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) setSelectedAgents(page.map((row: any) => row.original?._id));
+    else setSelectedAgents([]);
+  };
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) setSelectedAgents((prev) => [...prev, id]);
+    else setSelectedAgents((prev) => prev.filter((x) => x !== id));
+  };
+
   return (
     <div>
       {isLoadingAgents && <Loading />}
-      {agents.length === 0 && !isLoadingAgents && (
+      {dataAgents.length === 0 && !isLoadingAgents && (
        <EmptyData />
       )}
-      {!isLoadingAgents && agents.length > 0 && (
+      {!isLoadingAgents && dataAgents.length > 0 && (
         <div>
           <div className="flex justify-end mb-2">
             <Select
-              onChange={(e) => setPageSize(e.target.value)}
+              onChange={(e) => setPageSize(Number(e.target.value))}
               width="80px"
             >
               <option value={10}>10</option>
@@ -137,6 +154,19 @@ const AgentTable: React.FC<AgentTableProps> = ({
               <option value={100000}>All</option>
             </Select>
           </div>
+
+          {selectedAgents.length > 0 && (
+            <div className="flex items-center gap-3 mb-3">
+              <Button
+                size="sm"
+                colorScheme="green"
+                onClick={() => bulkApproveAgentsHandler && bulkApproveAgentsHandler(selectedAgents)}
+              >
+                Approve Selected ({selectedAgents.length})
+              </Button>
+              <Button size="sm" onClick={() => setSelectedAgents([])}>Clear Selection</Button>
+            </div>
+          )}
 
           <TableContainer maxHeight="600px" overflowY="auto">
             <Table variant="simple" {...getTableProps()}>
@@ -162,6 +192,24 @@ const AgentTable: React.FC<AgentTableProps> = ({
                   ) => {
                     return (
                       <Tr {...hg.getHeaderGroupProps()}>
+                        <Th
+                          textTransform="capitalize"
+                          fontSize="12px"
+                          fontWeight="700"
+                          color="black"
+                          backgroundColor="#fafafa"
+                          borderLeft="1px solid #d7d7d7"
+                          borderRight="1px solid #d7d7d7"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isAllSelected}
+                            ref={(el) => {
+                              if (el) (el as any).indeterminate = isIndeterminate;
+                            }}
+                            onChange={(e) => handleSelectAll(e.target.checked)}
+                          />
+                        </Th>
                         {hg.headers.map((column: any) => {
                           return (
                             <Th
@@ -216,6 +264,13 @@ const AgentTable: React.FC<AgentTableProps> = ({
                       className="relative hover:bg-[#e4e4e4] hover:cursor-pointer text-base lg:text-sm"
                       {...row.getRowProps()}
                     >
+                      <Td>
+                        <input
+                          type="checkbox"
+                          checked={selectedAgents.includes(row.original?._id)}
+                          onChange={(e) => handleSelectOne(row.original?._id, e.target.checked)}
+                        />
+                      </Td>
                       {row.cells.map((cell: Cell) => {
                         return (
                           <Td fontWeight="500" {...cell.getCellProps()}>
@@ -270,14 +325,14 @@ const AgentTable: React.FC<AgentTableProps> = ({
                             }
                           />
                         )}
-                        {approveAgentHandler && (
-                          <FcApproval
-                            className="hover:scale-110"
-                            size={16}
-                            onClick={() =>
-                              approveAgentHandler(row.original?._id)
-                            }
-                          />
+                        {approveAgentHandler && !row.original?.approved && (
+                          <Button
+                            size="sm"
+                            colorScheme="green"
+                            onClick={() => approveAgentHandler(row.original?._id)}
+                          >
+                            Approve
+                          </Button>
                         )}
                       </Td>
                     </Tr>

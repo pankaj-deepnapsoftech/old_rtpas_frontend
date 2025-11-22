@@ -29,7 +29,7 @@ const Approvals: React.FC = () => {
   const [activeSection, setActiveSection] = useState("products");
 
   const { isSuper, allowedroutes } = useSelector((state: any) => state.auth);
-  const isAllowed = isSuper || allowedroutes.includes("Approval");
+  const isAllowed = isSuper || allowedroutes.includes("approval");
   //  Products
   const [productSearchKey, setProductSearchKey] = useState<
     string | undefined
@@ -108,6 +108,20 @@ const Approvals: React.FC = () => {
     }
   };
 
+  const bulkApproveProductsHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) =>
+          updateProduct({ _id: id, approved: true }).unwrap()
+        )
+      );
+      toast.success(`Approved ${ids?.length || 0} product(s)`);
+      fetchUnapprovedProductsHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   const deleteProductHandler = async (id: string) => {
     try {
       const response: any = await deleteProduct({ _id: id }).unwrap();
@@ -151,6 +165,18 @@ const Approvals: React.FC = () => {
     }
   };
 
+  const bulkApproveStoresHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) => updateStore({ _id: id, approved: true }).unwrap())
+      );
+      toast.success(`Approved ${ids?.length || 0} store(s)`);
+      fetchUnapprovedStoresHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   const deleteStoreHandler = async (id: string) => {
     try {
       const response: any = await deleteStore(id).unwrap();
@@ -166,7 +192,7 @@ const Approvals: React.FC = () => {
     try {
       setIsLoadingBuyers(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "agent/unapproved-buyers",
+        process.env.REACT_APP_BACKEND_URL + "parties/unapproved",
         {
           method: "GET",
           headers: {
@@ -175,8 +201,27 @@ const Approvals: React.FC = () => {
         }
       );
       const data = await response.json();
-      setBuyers(data.agents);
-      setFilteredBuyers(data.agents);
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      const buyersList = rows.filter((r: any) => r.parties_type === "Buyer").map((r: any) => ({
+        _id: r._id,
+        name: r.contact_person_name || (Array.isArray(r.consignee_name) ? r.consignee_name[0] : r.consignee_name) || "",
+        email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        gst_number: r.bill_gst_to || r.shipped_gst_to || "",
+        company_name: r.company_name || "",
+        company_email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        company_phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        address_line1: r.bill_to || r.shipped_to || "",
+        address_line2: "",
+        pincode: "",
+        city: "",
+        state: "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        approved: r.approved,
+      }));
+      setBuyers(buyersList);
+      setFilteredBuyers(buyersList);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
     } finally {
@@ -188,7 +233,7 @@ const Approvals: React.FC = () => {
     try {
       setIsLoadingBuyers(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "agent/unapproved-suppliers",
+        process.env.REACT_APP_BACKEND_URL + "parties/unapproved",
         {
           method: "GET",
           headers: {
@@ -197,8 +242,27 @@ const Approvals: React.FC = () => {
         }
       );
       const data = await response.json();
-      setSellers(data.agents);
-      setFilteredSellers(data.agents);
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      const sellersList = rows.filter((r: any) => r.parties_type === "Seller").map((r: any) => ({
+        _id: r._id,
+        name: r.contact_person_name || (Array.isArray(r.consignee_name) ? r.consignee_name[0] : r.consignee_name) || "",
+        email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        gst_number: r.bill_gst_to || r.shipped_gst_to || "",
+        company_name: r.company_name || "",
+        company_email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        company_phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        address_line1: r.bill_to || r.shipped_to || "",
+        address_line2: "",
+        pincode: "",
+        city: "",
+        state: "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        approved: r.approved,
+      }));
+      setSellers(sellersList);
+      setFilteredSellers(sellersList);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
     } finally {
@@ -208,12 +272,53 @@ const Approvals: React.FC = () => {
 
   const approveAgentHandler = async (id: string) => {
     try {
-      const response = await updateAgent({ _id: id, approved: true }).unwrap();
-      toast.success(response.message);
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `parties/put/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ approved: true }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Approval failed");
+      }
+      toast.success(data?.message || "Approved successfully");
       fetchUnapprovedBuyersHandler();
       fetchUnapprovedSellersHandler();
     } catch (err: any) {
-      toast.error(err?.data?.message || "Something went wrong");
+      toast.error(err?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveAgentsHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map(async (id) => {
+          const response = await fetch(
+            process.env.REACT_APP_BACKEND_URL + `parties/put/${id}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${cookies?.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ approved: true }),
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.message || "Approval failed");
+        })
+      );
+      toast.success(`Approved ${ids?.length || 0} agent(s)`);
+      fetchUnapprovedBuyersHandler();
+      fetchUnapprovedSellersHandler();
+    } catch (err: any) {
+      toast.error(err?.message || "Something went wrong");
     }
   };
 
@@ -227,6 +332,7 @@ const Approvals: React.FC = () => {
       toast.error(err?.data?.message || err?.message || "Something went wrong");
     }
   };
+
 
   // For Unapproved BOMs
   const fetchUnapprovedBomsHandler = async () => {
@@ -261,6 +367,18 @@ const Approvals: React.FC = () => {
     }
   };
 
+  const bulkApproveBomsHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) => updateBom({ _id: id, approved: true }).unwrap())
+      );
+      toast.success(`Approved ${ids?.length || 0} BOM(s)`);
+      fetchUnapprovedBomsHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   const deleteBomHandler = async (id: string) => {
     try {
       const response: any = await deleteBom(id).unwrap();
@@ -275,8 +393,9 @@ const Approvals: React.FC = () => {
   const fetchUnapprovedBomRMsHandler = async () => {
     try {
       setIsLoadingBomRMs(true);
+      const endpoint = "bom/all/inventory/raw-materials";
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "bom/unapproved/raw-materials",
+        process.env.REACT_APP_BACKEND_URL + endpoint,
         {
           method: "GET",
           headers: {
@@ -285,8 +404,12 @@ const Approvals: React.FC = () => {
         }
       );
       const data = await response.json();
-      setBomRMs(data.unapproved);
-      setFilteredBomRMs(data.unapproved);
+      const raw = Array.isArray(data.unapproved)
+        ? data.unapproved.map((i: any) => ({ ...i, status: i.bom_status || "raw material approval pending" }))
+        : [];
+      const uniq = Array.from(new Map(raw.map((r: any) => [r._id, r])).values());
+      setBomRMs(uniq);
+      setFilteredBomRMs(uniq);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
     } finally {
@@ -296,17 +419,18 @@ const Approvals: React.FC = () => {
 
   const approveBomRMHandler = async (id: string) => {
     try {
+      const endpoint = (isSuper
+        ? "bom/approve/raw-materials"
+        : "bom/approve/inventory/raw-materials");
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "bom/approve/raw-materials",
+        process.env.REACT_APP_BACKEND_URL + endpoint,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies?.access_token}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify({
-            _id: id,
-          }),
+          body: JSON.stringify({ _id: id }),
         }
       );
       const data = await response.json();
@@ -315,9 +439,35 @@ const Approvals: React.FC = () => {
       }
 
       toast.success(data.message);
-      fetchUnapprovedBomRMsHandler();
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveBomRMHandler = async (ids: string[]) => {
+    try {
+      const endpoint = isSuper ? "bom/approve/raw-materials" : "bom/approve/inventory/raw-materials";
+      await Promise.all(
+        (ids || []).map(async (id) => {
+          const response = await fetch(
+            process.env.REACT_APP_BACKEND_URL + endpoint,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${cookies?.access_token}`,
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({ _id: id }),
+            }
+          );
+          const data = await response.json();
+          if (!data.success) throw new Error(data.message || "Failed");
+        })
+      );
+      toast.success(`Approved ${ids?.length || 0} raw material(s)`);
+      fetchUnapprovedBomRMsHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
     }
   };
 
@@ -329,6 +479,7 @@ const Approvals: React.FC = () => {
     fetchUnapprovedBomsHandler();
     fetchUnapprovedBomRMsHandler();
   }, []);
+
 
   // Product Search
   useEffect(() => {
@@ -361,7 +512,7 @@ const Approvals: React.FC = () => {
             ?.join("")
             ?.includes(searchTxt?.replaceAll("/", "") || ""))
     );
-    setFilteredStores(results);
+    setFilteredProducts(results);
   }, [productSearchKey]);
 
   // Store Search
@@ -473,6 +624,8 @@ const Approvals: React.FC = () => {
     );
     setFilteredSellers(results);
   }, [sellerSearchKey]);
+
+  
 
   // BOM Search
   useEffect(() => {
@@ -632,6 +785,7 @@ const Approvals: React.FC = () => {
                 products={filteredProducts}
                 deleteProductHandler={deleteProductHandler}
                 approveProductHandler={approveProductHandler}
+                bulkApproveProductsHandler={bulkApproveProductsHandler}
               />
             </div>
           </div>
@@ -701,11 +855,13 @@ const Approvals: React.FC = () => {
                 </div>
 
                 <div className="overflow-hidden">
-                  <StoreTable
-                    isLoadingStores={isLoadingStores}
-                    stores={filteredStores}
-                    deleteStoreHandler={deleteStoreHandler}
-                  />
+              <StoreTable
+                isLoadingStores={isLoadingStores}
+                stores={filteredStores}
+                deleteStoreHandler={deleteStoreHandler}
+                approveStoreHandler={approveStoreHandler}
+                bulkApproveStoresHandler={bulkApproveStoresHandler}
+              />
                 </div>
               </div>
         )}
@@ -724,18 +880,21 @@ const Approvals: React.FC = () => {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                  <h2
-                    className="text-xl font-semibold"
-                    style={{ color: colors.text.primary }}
-                  >
-                    Buyers for Approval
-                  </h2>
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: colors.text.secondary }}
-                  >
-                    Review and approve pending buyers
-                  </p>
+                      <h2
+                        className="text-xl font-semibold"
+                        style={{ color: colors.text.primary }}
+                      >
+                        Buyers for Approval
+                      </h2>
+                      <p
+                        className="text-sm mt-1"
+                        style={{ color: colors.text.secondary }}
+                      >
+                        Review and approve pending buyers
+                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
+                          Pending: {buyers?.length || 0}
+                        </span>
+                      </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -777,8 +936,8 @@ const Approvals: React.FC = () => {
               <AgentTable
                 isLoadingAgents={isLoadingBuyers}
                 agents={filteredBuyers}
-                deleteAgentHandler={deleteAgentHandler}
                 approveAgentHandler={approveAgentHandler}
+                bulkApproveAgentsHandler={bulkApproveAgentsHandler}
               />
             </div>
           </div>
@@ -798,18 +957,21 @@ const Approvals: React.FC = () => {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                  <h2
-                    className="text-xl font-semibold"
-                    style={{ color: colors.text.primary }}
-                  >
-                    Suppliers for Approval
-                  </h2>
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: colors.text.secondary }}
-                  >
-                    Review and approve pending suppliers
-                  </p>
+                      <h2
+                        className="text-xl font-semibold"
+                        style={{ color: colors.text.primary }}
+                      >
+                        Suppliers for Approval
+                      </h2>
+                      <p
+                        className="text-sm mt-1"
+                        style={{ color: colors.text.secondary }}
+                      >
+                        Review and approve pending suppliers
+                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
+                          Pending: {sellers?.length || 0}
+                        </span>
+                      </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -851,12 +1013,13 @@ const Approvals: React.FC = () => {
               <AgentTable
                 isLoadingAgents={isLoadingSellers}
                 agents={filteredSellers}
-                deleteAgentHandler={deleteAgentHandler}
                 approveAgentHandler={approveAgentHandler}
+                bulkApproveAgentsHandler={bulkApproveAgentsHandler}
               />
             </div>
           </div>
         )}
+
 
         {activeSection === "boms" && (
           <div
@@ -927,6 +1090,8 @@ const Approvals: React.FC = () => {
                 boms={filteredBoms}
                 deleteBomHandler={deleteBomHandler}
                 approveBomHandler={approveBomHandler}
+                bulkApproveBomsHandler={bulkApproveBomsHandler}
+                refreshBoms={fetchUnapprovedBomsHandler}
               />
             </div>
           </div>
@@ -1000,6 +1165,7 @@ const Approvals: React.FC = () => {
                 isLoadingProducts={isLoadingBomRMs}
                 products={filteredBomRMs}
                 approveProductHandler={approveBomRMHandler}
+                bulkApproveBomRMHandler={bulkApproveBomRMHandler}
               />
             </div>
           </div>

@@ -9,6 +9,7 @@ import { useSelector } from "react-redux";
 import BOMRawMaterialTable from "../components/Table/BOMRawMaterialTable";
 import { colors } from "../theme/colors";
 import FinishedGoodsTable from "../components/Table/FinishGoodsApprovalTable";
+import { io } from "socket.io-client";
 
 // Lightweight Finished Goods table right here so you don't need an external component
 // Swap this with your own component if you already have one.
@@ -80,8 +81,7 @@ const InventoryApprovals: React.FC = () => {
 
       toast.success("Raw material approved successfully!");
       setIsApproved(true);
- window.location.reload()
-     fetchRM();
+      fetchRM();
     } catch (err: any) {
       toast.error(err?.message || "Something went wrong");
     }
@@ -142,6 +142,27 @@ const InventoryApprovals: React.FC = () => {
       toast.error(err?.message || "Something went wrong");
     }
   };
+
+  useEffect(() => {
+    const backend = process.env.REACT_APP_BACKEND_URL || "";
+    const socketUrl = backend.replace(/\/?api\/?$/, "");
+    const socket = io(socketUrl, { withCredentials: true });
+    socket.emit("joinDashboard");
+    const refreshRaw = () => fetchRM();
+    const refreshFG = () => fetchFG();
+    socket.on("processStatusUpdated", () => {
+      if (activeTab === "raw") refreshRaw();
+      if (activeTab === "fg") refreshFG();
+    });
+    socket.on("inventoryApprovalUpdated", () => {
+      if (activeTab === "raw") refreshRaw();
+    });
+    return () => {
+      socket.off("processStatusUpdated");
+      socket.off("inventoryApprovalUpdated");
+      socket.disconnect();
+    };
+  }, [activeTab]);
 
   // When user changes tab, lazy-load data for that tab
   useEffect(() => {
