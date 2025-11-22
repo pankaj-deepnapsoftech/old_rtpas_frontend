@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import ScrapTable from "../components/Table/ScrapTable";
 import { toast } from "react-toastify";
-import { FiSearch } from "react-icons/fi";
+import { FiPlus, FiSearch } from "react-icons/fi";
 import { colors } from "../theme/colors";
 import { Recycle } from "lucide-react";
+import AddNewScrap from "../components/Drawers/Scrap/AddNewScrap";
 
 const Scrap: React.FC = () => {
   const [cookies] = useCookies();
@@ -16,27 +17,56 @@ const Scrap: React.FC = () => {
   const [filteredData, setFilteredData] = useState<any[] | []>([]);
   const [isLoadingScraps, setIsLoadingScraps] = useState<boolean>(false);
   const [searchKey, setSearchKey] = useState<string | undefined>();
+  const [isAddScrapDrawerOpened, setIsAddScrapDrawerOpened] = useState(false);
+  const [editScrap, setEditScrap] = useState(null);
 
   const fetchScrapHandler = async () => {
     try {
+      setIsLoadingScraps(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "scrap/all",
+        process.env.REACT_APP_BACKEND_URL + "scrap/get",
         {
-          method:"GET",
+          method: "GET",
           headers: {
             Authorization: `Bearer ${cookies?.access_token}`,
           },
         }
       );
       const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message);
+      if (!data.message) {
+        throw new Error(data.message || "Failed to fetch scraps");
       }
-      setData(data.scraps);
-      setFilteredData(data.scraps);
+      setData(data.data || []);
+      setFilteredData(data.data || []);
     } catch (error: any) {
       toast.error(error?.message || "Something went wrong");
+    } finally {
+      setIsLoadingScraps(false);
     }
+  };
+
+  const openAddScrapDrawerHandler = () => {
+    setEditScrap(null);
+    setIsAddScrapDrawerOpened(true);
+  };
+
+  const closeAddScrapDrawerHandler = () => {
+    setIsAddScrapDrawerOpened(false);
+    setEditScrap(null);
+  };
+
+  const handleScrapCreated = (newScrap) => {
+    const updatedScraps = [newScrap, ...data];
+    setData(updatedScraps);
+    setFilteredData(updatedScraps);
+  };
+
+  const handleScrapUpdated = (updatedScrap) => {
+    const updatedScraps = data.map((scrap) =>
+      scrap._id === updatedScrap._id ? updatedScrap : scrap
+    );
+    setData(updatedScraps);
+    setFilteredData(updatedScraps);
   };
 
   useEffect(() => {
@@ -47,10 +77,13 @@ const Scrap: React.FC = () => {
     const searchTxt = searchKey?.toLowerCase();
     const results = data.filter(
       (scrap: any) =>
-        scrap.bom.bom_name?.toLowerCase()?.includes(searchTxt) ||
-        scrap.item.name?.toLowerCase()?.includes(searchTxt) ||
-        scrap.produced_quantity.toString().toLowerCase().includes(searchTxt) ||
-        scrap.estimated_quantity.toString().toLowerCase().includes(searchTxt) ||
+        scrap.Scrap_name?.toLowerCase()?.includes(searchTxt) ||
+        scrap.Scrap_id?.toLowerCase()?.includes(searchTxt) ||
+        scrap.price?.toString().toLowerCase().includes(searchTxt) ||
+        scrap.Extract_from?.toLowerCase()?.includes(searchTxt) ||
+        scrap.Category?.toLowerCase()?.includes(searchTxt) ||
+        scrap.qty?.toString().toLowerCase().includes(searchTxt) ||
+        scrap.description?.toLowerCase()?.includes(searchTxt) ||
         (scrap?.createdAt &&
           new Date(scrap?.createdAt)
             ?.toISOString()
@@ -69,15 +102,23 @@ const Scrap: React.FC = () => {
             ?.includes(searchTxt?.replaceAll("/", "") || ""))
     );
     setFilteredData(results);
-  }, [searchKey]);
+  }, [searchKey, data]);
 
   return (
     <div
       className="min-h-screen"
       style={{ backgroundColor: colors.background.page }}
     >
+      {isAddScrapDrawerOpened && (
+        <AddNewScrap
+          onScrapCreated={handleScrapCreated}
+          closeDrawerHandler={closeAddScrapDrawerHandler}
+          editScrap={editScrap}
+          onScrapUpdated={handleScrapUpdated}
+          fetchScrapsHandler={fetchScrapHandler}
+        />
+      )}
       <div className="p-2 lg:p-3">
-        {/* Header Section */}
         <div
           className="rounded-xl shadow-sm border border-gray-100 p-6 mb-6"
           style={{
@@ -106,8 +147,23 @@ const Scrap: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={openAddScrapDrawerHandler}
+                style={{
+                  backgroundColor: colors.primary[600],
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.primary[700];
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.primary[600];
+                }}
+                className="flex items-center gap-2 px-6 py-3 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+              >
+                <FiPlus size={16} />
+                Add New Scrap
+              </button>
               <button
                 onClick={fetchScrapHandler}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
@@ -130,9 +186,7 @@ const Scrap: React.FC = () => {
             </div>
           </div>
 
-          {/* Search and Filters Row */}
           <div className="mt-6 flex flex-col lg:flex-row gap-4 items-end">
-            {/* Search Input */}
             <div className="flex-1 max-w-md">
               <label
                 className="block text-sm font-medium mb-2"
@@ -161,7 +215,7 @@ const Scrap: React.FC = () => {
                     e.currentTarget.style.borderColor = colors.input.border;
                     e.currentTarget.style.boxShadow = "none";
                   }}
-                  placeholder="Search by BOM, item name, quantity..."
+                  placeholder="Search by name, ID, category, extract from..."
                   value={searchKey || ""}
                   onChange={(e) => setSearchKey(e.target.value)}
                 />
@@ -170,7 +224,6 @@ const Scrap: React.FC = () => {
           </div>
         </div>
 
-        {/* Scrap Table */}
         <div
           className="rounded-xl shadow-sm border border-gray-100 overflow-hidden"
           style={{
@@ -185,8 +238,17 @@ const Scrap: React.FC = () => {
           />
         </div>
       </div>
+
+      {isAddScrapDrawerOpened && (
+        <AddNewScrap
+          onScrapCreated={handleScrapCreated}
+          closeDrawerHandler={closeAddScrapDrawerHandler}
+          fetchScrapsHandler={fetchScrapHandler}
+          editScrap={editScrap}
+        />
+      )}
     </div>
   );
 };
-   
+
 export default Scrap;

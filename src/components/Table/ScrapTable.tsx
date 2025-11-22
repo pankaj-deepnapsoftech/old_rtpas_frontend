@@ -27,11 +27,14 @@ import { colors } from "../../theme/colors";
 
 interface ScrapTableProps {
   scraps: Array<{
-    item: { name: string };
-    bom: { bom_name: string; finished_good: { item: { name: string } } };
-    estimated_quantity: string;
-    produced_quantity: string;
-    total_part_cost: string;
+    _id: string;
+    Scrap_name: string;
+    Scrap_id: string;
+    price: number;
+    Extract_from: string;
+    Category: string;
+    qty: number;
+    description: string;
     createdAt: string;
     updatedAt: string;
   }>;
@@ -46,12 +49,13 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
 }) => {
   const columns: Column<any>[] = useMemo(
     () => [
-      { Header: "Item", accessor: "item" },
-      { Header: "BOM", accessor: "bom" },
-      { Header: "Finished Good", accessor: "finished_good" },
-      { Header: "Estimated Quantity", accessor: "estimated_quantity" },
-      { Header: "Produced Quantity", accessor: "produced_quantity" },
-      { Header: "Total Part Cost", accessor: "total_part_cost" },
+      { Header: "Scrap ID", accessor: "Scrap_id" },
+      { Header: "Name", accessor: "Scrap_name" },
+      { Header: "Category", accessor: "Category" },
+      { Header: "Extract From", accessor: "Extract_from" },
+      { Header: "Quantity", accessor: "qty" },
+      { Header: "Price", accessor: "price" },
+      { Header: "Description", accessor: "description" },
       { Header: "Created On", accessor: "createdAt" },
       { Header: "Last Updated", accessor: "updatedAt" },
     ],
@@ -229,7 +233,7 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
                         : "default",
                     }}
                     onClick={() =>
-                      openScrapDetailsDrawerHandler?.(row.original.id)
+                      openScrapDetailsDrawerHandler?.(row.original._id)
                     }
                   >
                     {row.cells.map((cell: Cell) => {
@@ -237,21 +241,22 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
                       const original = row.original;
 
                       let displayValue;
-                      if (colId === "item") {
-                        displayValue = original.item?.name || "N/A";
-                      } else if (colId === "bom") {
-                        displayValue = original.bom?.bom_name || "N/A";
-                      } else if (colId === "finished_good") {
-                        displayValue =
-                          original.bom?.finished_good?.item?.name || "N/A";
-                      } else if (colId === "estimated_quantity") {
-                        displayValue = original.estimated_quantity || "0";
-                      } else if (colId === "produced_quantity") {
-                        displayValue = original.produced_quantity || "0";
-                      } else if (colId === "total_part_cost") {
-                        displayValue = original.total_part_cost
-                          ? `₹${original.total_part_cost}`
+                      if (colId === "Scrap_id") {
+                        displayValue = original.Scrap_id || "N/A";
+                      } else if (colId === "Scrap_name") {
+                        displayValue = original.Scrap_name || "N/A";
+                      } else if (colId === "Category") {
+                        displayValue = original.Category || "N/A";
+                      } else if (colId === "Extract_from") {
+                        displayValue = original.Extract_from || "N/A";
+                      } else if (colId === "qty") {
+                        displayValue = original.qty || "0";
+                      } else if (colId === "price") {
+                        displayValue = original.price
+                          ? `₹${original.price}`
                           : "₹0";
+                      } else if (colId === "description") {
+                        displayValue = original.description || "N/A";
                       } else if (colId === "createdAt") {
                         displayValue = original.createdAt
                           ? moment(original.createdAt).format("DD/MM/YYYY")
