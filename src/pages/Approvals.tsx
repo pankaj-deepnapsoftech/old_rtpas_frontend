@@ -71,6 +71,7 @@ const Approvals: React.FC = () => {
   const [selectedSales, setSelectedSales] = useState<string[]>([]);
   const [openModal, setOpenModal] = useState(false)
   const [modalInput, setModalInput] = useState("")
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null)
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteStore] = useDeleteStoresMutation();
@@ -555,6 +556,29 @@ const Approvals: React.FC = () => {
     fetchUnapprovedBomRMsHandler();
     fetchUnapprovedSalesHandler();
   }, []);
+
+  const handleModalSubmit = async (input: string) => {
+    try {
+      if (!selectedSaleId) return;
+      const res = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `sale/update/${selectedSaleId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ terms_of_delivery: input }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to update sale");
+      await approveSaleHandler(selectedSaleId);
+      setModalInput("");
+      setSelectedSaleId(null);
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
+  };
 
 
   // Product Search
@@ -1399,6 +1423,7 @@ const Approvals: React.FC = () => {
                                   setCurrentStock({currentStock:row?.product_id[0]?.current_stock,
                                     item_name: row?.product_id[0]?.name 
                                   })
+                                  setSelectedSaleId(row?._id)
                                 } else {
                                   approveSaleHandler(row?._id);
                                 }
