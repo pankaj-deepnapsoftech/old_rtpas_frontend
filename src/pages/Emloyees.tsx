@@ -77,6 +77,53 @@ const Employees: React.FC = () => {
     }
   };
 
+  const approveEmployeeHandler = async (id: string) => {
+    try {
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + "auth/user",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+          body: JSON.stringify({ _id: id, isVerified: true }),
+        }
+      );
+      const result = await response.json();
+      if (!result.success) throw new Error(result?.message);
+      toast.success("User verified");
+      fetchEmployeesHandler();
+    } catch (error: any) {
+      toast.error(error?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveEmployeesHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) =>
+          fetch(process.env.REACT_APP_BACKEND_URL + "auth/user", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${cookies?.access_token}`,
+            },
+            body: JSON.stringify({ _id: id, isVerified: true }),
+          })
+            .then((res) => res.json())
+            .then((json) => {
+              if (!json.success) throw new Error(json?.message);
+            })
+        )
+      );
+      toast.success(`Approved ${ids.length} user(s)`);
+      fetchEmployeesHandler();
+    } catch (error: any) {
+      toast.error(error?.message || "Something went wrong");
+    }
+  };
+
   useEffect(() => {
     fetchEmployeesHandler();
   }, []);
@@ -205,6 +252,8 @@ const Employees: React.FC = () => {
           openEmployeeDetailsDrawerHandler={openEmployeeDetailsDrawerHandler}
           openUpdateEmployeeDrawerHandler={openUpdateEmployeeDrawerHandler}
           isLoadingEmployees={isLoadingEmployees}
+          approveEmployeeHandler={approveEmployeeHandler}
+          bulkApproveEmployeesHandler={bulkApproveEmployeesHandler}
         />
       </div>
     </div>

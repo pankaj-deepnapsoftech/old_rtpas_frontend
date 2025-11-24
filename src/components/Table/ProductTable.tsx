@@ -40,6 +40,7 @@ interface ProductTableProps {
   deleteProductHandler?: (id: string) => void;
   bulkDeleteProductsHandler?: (productIds: string[]) => void;
   approveProductHandler?: (id: string) => void;
+  bulkApproveProductsHandler?: (ids: string[]) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -50,7 +51,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
   deleteProductHandler,
   bulkDeleteProductsHandler,
   approveProductHandler,
+  bulkApproveProductsHandler,
 }) => {
+  const dataProducts = Array.isArray(products) ? products : [];
+  const memoData = useMemo(() => dataProducts, [products]);
   const columns: Column<any>[] = useMemo(
     () => [
       { Header: "ID", accessor: "product_id" },
@@ -124,7 +128,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     pageCount,
     setPageSize,
   } = useTable(
-    { columns, data: products, initialState: { pageIndex: 0 } },
+    { columns, data: memoData, initialState: { pageIndex: 0 } },
     useSortBy,
     usePagination
   );
@@ -211,7 +215,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         </div>
       )}
 
-      {!isLoadingProducts && products.length === 0 && (
+      {!isLoadingProducts && dataProducts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div
             className="rounded-full p-6 mb-4"
@@ -244,7 +248,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
         </div>
       )}
 
-      {!isLoadingProducts && products.length > 0 && (
+      {!isLoadingProducts && dataProducts.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-6">
@@ -253,14 +257,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
                   className="text-lg font-semibold"
                   style={{ color: colors.text.primary }}
                 >
-                  {products.length} Product{products.length !== 1 ? "s" : ""}{" "}
+                  {dataProducts.length} Product{dataProducts.length !== 1 ? "s" : ""}{" "}
                   Found
                 </h3>
               </div>
 
               {selectedProducts.length > 0 && (
                 <div className="flex items-center gap-3">
-                  {bulkDeleteProductsHandler && (
+                    {bulkDeleteProductsHandler && (
                     <button
                       onClick={() => setShowBulkDeleteModal(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
@@ -279,6 +283,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         />
                       </svg>
                       Delete Selected ({selectedProducts.length})
+                    </button>
+                  )}
+                  {bulkApproveProductsHandler && selectedProducts.length > 0 && (
+                    <button
+                      onClick={() => bulkApproveProductsHandler(selectedProducts)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Approve Selected ({selectedProducts.length})
                     </button>
                   )}
                   <button
@@ -358,19 +370,21 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         color: colors.table.headerText,
                         width: "60px",
                         minWidth: "60px",
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 3,
+                        backgroundColor: colors.table.header,
                       }}
                     >
-                      {cookies?.role === "admin" && (
-                        <input
-                          type="checkbox"
-                          checked={isAllSelected}
-                          ref={(el) => {
-                            if (el) el.indeterminate = isIndeterminate;
-                          }}
-                          onChange={(e) => handleSelectAll(e.target.checked)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        />
-                      )}
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isIndeterminate;
+                        }}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
                     </th>
                     <th
                       className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
@@ -388,7 +402,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         color: colors.table.headerText,
                         position: "sticky",
                         top: 0,
-                        left: 0,
+                        left: 60,
                         zIndex: 3,
                         backgroundColor: colors.table.header,
                         width: "160px",
@@ -484,23 +498,28 @@ const ProductTable: React.FC<ProductTableProps> = ({
                             color: colors.text.secondary,
                             width: "60px",
                             minWidth: "60px",
+                            position: "sticky",
+                            left: 0,
+                            zIndex: 2,
+                            backgroundColor:
+                              index % 2 === 0
+                                ? colors.background.card
+                                : colors.table.stripe,
                           }}
                         >
-                          {cookies?.role === "admin" && (
-                            <input
-                              type="checkbox"
-                              checked={selectedProducts.includes(
-                                row.original._id
-                              )}
-                              onChange={(e) =>
-                                handleSelectProduct(
-                                  row.original._id,
-                                  e.target.checked
-                                )
-                              }
-                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                            />
-                          )}
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.includes(
+                              row.original._id
+                            )}
+                            onChange={(e) =>
+                              handleSelectProduct(
+                                row.original._id,
+                                e.target.checked
+                              )
+                            }
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                          />
                         </td>
                         <td
                           className="px-4 py-3 text-sm font-mono whitespace-nowrap"
@@ -517,7 +536,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                           style={{
                             color: colors.text.secondary,
                             position: "sticky",
-                            left: 0,
+                            left: 60,
                             zIndex: 1,
                             backgroundColor:
                               index % 2 === 0

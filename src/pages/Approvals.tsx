@@ -29,7 +29,7 @@ const Approvals: React.FC = () => {
   const [activeSection, setActiveSection] = useState("products");
 
   const { isSuper, allowedroutes } = useSelector((state: any) => state.auth);
-  const isAllowed = isSuper || allowedroutes.includes("Approval");
+  const isAllowed = isSuper || allowedroutes.includes("approval");
   //  Products
   const [productSearchKey, setProductSearchKey] = useState<
     string | undefined
@@ -62,6 +62,13 @@ const Approvals: React.FC = () => {
   const [bomRMs, setBomRMs] = useState<any>([]);
   const [filteredBomRMs, setFilteredBomRMs] = useState<any>([]);
   const [isLoadingBomRMs, setIsLoadingBomRMs] = useState<boolean>(false);
+
+  //  Sales (Unapproved)
+  const [salesSearchKey, setSalesSearchKey] = useState<string | undefined>();
+  const [sales, setSales] = useState<any>([]);
+  const [filteredSales, setFilteredSales] = useState<any>([]);
+  const [isLoadingSales, setIsLoadingSales] = useState<boolean>(false);
+  const [selectedSales, setSelectedSales] = useState<string[]>([]);
 
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProduct] = useUpdateProductMutation();
@@ -108,6 +115,20 @@ const Approvals: React.FC = () => {
     }
   };
 
+  const bulkApproveProductsHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) =>
+          updateProduct({ _id: id, approved: true }).unwrap()
+        )
+      );
+      toast.success(`Approved ${ids?.length || 0} product(s)`);
+      fetchUnapprovedProductsHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   const deleteProductHandler = async (id: string) => {
     try {
       const response: any = await deleteProduct({ _id: id }).unwrap();
@@ -151,6 +172,18 @@ const Approvals: React.FC = () => {
     }
   };
 
+  const bulkApproveStoresHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) => updateStore({ _id: id, approved: true }).unwrap())
+      );
+      toast.success(`Approved ${ids?.length || 0} store(s)`);
+      fetchUnapprovedStoresHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   const deleteStoreHandler = async (id: string) => {
     try {
       const response: any = await deleteStore(id).unwrap();
@@ -166,7 +199,7 @@ const Approvals: React.FC = () => {
     try {
       setIsLoadingBuyers(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "agent/unapproved-buyers",
+        process.env.REACT_APP_BACKEND_URL + "parties/unapproved",
         {
           method: "GET",
           headers: {
@@ -175,8 +208,27 @@ const Approvals: React.FC = () => {
         }
       );
       const data = await response.json();
-      setBuyers(data.agents);
-      setFilteredBuyers(data.agents);
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      const buyersList = rows.filter((r: any) => r.parties_type === "Buyer").map((r: any) => ({
+        _id: r._id,
+        name: r.contact_person_name || (Array.isArray(r.consignee_name) ? r.consignee_name[0] : r.consignee_name) || "",
+        email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        gst_number: r.bill_gst_to || r.shipped_gst_to || "",
+        company_name: r.company_name || "",
+        company_email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        company_phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        address_line1: r.bill_to || r.shipped_to || "",
+        address_line2: "",
+        pincode: "",
+        city: "",
+        state: "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        approved: r.approved,
+      }));
+      setBuyers(buyersList);
+      setFilteredBuyers(buyersList);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
     } finally {
@@ -188,7 +240,7 @@ const Approvals: React.FC = () => {
     try {
       setIsLoadingBuyers(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "agent/unapproved-suppliers",
+        process.env.REACT_APP_BACKEND_URL + "parties/unapproved",
         {
           method: "GET",
           headers: {
@@ -197,8 +249,27 @@ const Approvals: React.FC = () => {
         }
       );
       const data = await response.json();
-      setSellers(data.agents);
-      setFilteredSellers(data.agents);
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      const sellersList = rows.filter((r: any) => r.parties_type === "Seller").map((r: any) => ({
+        _id: r._id,
+        name: r.contact_person_name || (Array.isArray(r.consignee_name) ? r.consignee_name[0] : r.consignee_name) || "",
+        email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        gst_number: r.bill_gst_to || r.shipped_gst_to || "",
+        company_name: r.company_name || "",
+        company_email: Array.isArray(r.email_id) ? r.email_id[0] : r.email_id || "",
+        company_phone: Array.isArray(r.contact_number) ? r.contact_number[0] : r.contact_number || "",
+        address_line1: r.bill_to || r.shipped_to || "",
+        address_line2: "",
+        pincode: "",
+        city: "",
+        state: "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        approved: r.approved,
+      }));
+      setSellers(sellersList);
+      setFilteredSellers(sellersList);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
     } finally {
@@ -208,12 +279,53 @@ const Approvals: React.FC = () => {
 
   const approveAgentHandler = async (id: string) => {
     try {
-      const response = await updateAgent({ _id: id, approved: true }).unwrap();
-      toast.success(response.message);
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `parties/put/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ approved: true }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Approval failed");
+      }
+      toast.success(data?.message || "Approved successfully");
       fetchUnapprovedBuyersHandler();
       fetchUnapprovedSellersHandler();
     } catch (err: any) {
-      toast.error(err?.data?.message || "Something went wrong");
+      toast.error(err?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveAgentsHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map(async (id) => {
+          const response = await fetch(
+            process.env.REACT_APP_BACKEND_URL + `parties/put/${id}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${cookies?.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ approved: true }),
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.message || "Approval failed");
+        })
+      );
+      toast.success(`Approved ${ids?.length || 0} agent(s)`);
+      fetchUnapprovedBuyersHandler();
+      fetchUnapprovedSellersHandler();
+    } catch (err: any) {
+      toast.error(err?.message || "Something went wrong");
     }
   };
 
@@ -227,6 +339,7 @@ const Approvals: React.FC = () => {
       toast.error(err?.data?.message || err?.message || "Something went wrong");
     }
   };
+
 
   // For Unapproved BOMs
   const fetchUnapprovedBomsHandler = async () => {
@@ -261,6 +374,18 @@ const Approvals: React.FC = () => {
     }
   };
 
+  const bulkApproveBomsHandler = async (ids: string[]) => {
+    try {
+      await Promise.all(
+        (ids || []).map((id) => updateBom({ _id: id, approved: true }).unwrap())
+      );
+      toast.success(`Approved ${ids?.length || 0} BOM(s)`);
+      fetchUnapprovedBomsHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
   const deleteBomHandler = async (id: string) => {
     try {
       const response: any = await deleteBom(id).unwrap();
@@ -275,8 +400,9 @@ const Approvals: React.FC = () => {
   const fetchUnapprovedBomRMsHandler = async () => {
     try {
       setIsLoadingBomRMs(true);
+      const endpoint = "bom/all/inventory/raw-materials";
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "bom/unapproved/raw-materials",
+        process.env.REACT_APP_BACKEND_URL + endpoint,
         {
           method: "GET",
           headers: {
@@ -285,8 +411,12 @@ const Approvals: React.FC = () => {
         }
       );
       const data = await response.json();
-      setBomRMs(data.unapproved);
-      setFilteredBomRMs(data.unapproved);
+      const raw = Array.isArray(data.unapproved)
+        ? data.unapproved.map((i: any) => ({ ...i, status: i.bom_status || "raw material approval pending" }))
+        : [];
+      const uniq = Array.from(new Map(raw.map((r: any) => [r._id, r])).values());
+      setBomRMs(uniq);
+      setFilteredBomRMs(uniq);
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
     } finally {
@@ -296,17 +426,18 @@ const Approvals: React.FC = () => {
 
   const approveBomRMHandler = async (id: string) => {
     try {
+      const endpoint = (isSuper
+        ? "bom/approve/raw-materials"
+        : "bom/approve/inventory/raw-materials");
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "bom/approve/raw-materials",
+        process.env.REACT_APP_BACKEND_URL + endpoint,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies?.access_token}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify({
-            _id: id,
-          }),
+          body: JSON.stringify({ _id: id }),
         }
       );
       const data = await response.json();
@@ -315,9 +446,102 @@ const Approvals: React.FC = () => {
       }
 
       toast.success(data.message);
-      fetchUnapprovedBomRMsHandler();
     } catch (err: any) {
       toast.error(err?.data?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveBomRMHandler = async (ids: string[]) => {
+    try {
+      const endpoint = isSuper ? "bom/approve/raw-materials" : "bom/approve/inventory/raw-materials";
+      await Promise.all(
+        (ids || []).map(async (id) => {
+          const response = await fetch(
+            process.env.REACT_APP_BACKEND_URL + endpoint,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${cookies?.access_token}`,
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({ _id: id }),
+            }
+          );
+          const data = await response.json();
+          if (!data.success) throw new Error(data.message || "Failed");
+        })
+      );
+      toast.success(`Approved ${ids?.length || 0} raw material(s)`);
+      fetchUnapprovedBomRMsHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
+  // For Unapproved Sales
+  const fetchUnapprovedSalesHandler = async () => {
+    try {
+      setIsLoadingSales(true);
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + "sale/unapproved",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      setSales(rows);
+      setFilteredSales(rows);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Something went wrong");
+    } finally {
+      setIsLoadingSales(false);
+    }
+  };
+
+  const approveSaleHandler = async (id: string) => {
+    try {
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `sale/approve/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data?.message || "Failed");
+      toast.success(data?.message || "Sale approved");
+      fetchUnapprovedSalesHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
+    }
+  };
+
+  const bulkApproveSalesHandler = async (ids: string[]) => {
+    try {
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `sale/bulk-approve`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ids }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data?.message || "Failed");
+      toast.success(data?.message || `Approved ${ids.length} sale(s)`);
+      setSelectedSales([]);
+      fetchUnapprovedSalesHandler();
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Something went wrong");
     }
   };
 
@@ -328,7 +552,9 @@ const Approvals: React.FC = () => {
     fetchUnapprovedSellersHandler();
     fetchUnapprovedBomsHandler();
     fetchUnapprovedBomRMsHandler();
+    fetchUnapprovedSalesHandler();
   }, []);
+
 
   // Product Search
   useEffect(() => {
@@ -361,7 +587,7 @@ const Approvals: React.FC = () => {
             ?.join("")
             ?.includes(searchTxt?.replaceAll("/", "") || ""))
     );
-    setFilteredStores(results);
+    setFilteredProducts(results);
   }, [productSearchKey]);
 
   // Store Search
@@ -474,6 +700,8 @@ const Approvals: React.FC = () => {
     setFilteredSellers(results);
   }, [sellerSearchKey]);
 
+  
+
   // BOM Search
   useEffect(() => {
     const searchTxt = bomSearchKey?.toLowerCase();
@@ -506,6 +734,21 @@ const Approvals: React.FC = () => {
     setFilteredBoms(results);
   }, [bomSearchKey]);
 
+  // Sales Search
+  useEffect(() => {
+    const searchTxt = salesSearchKey?.toLowerCase();
+    const results = sales.filter((s: any) =>
+      (s?.order_id?.toLowerCase()?.includes(searchTxt)) ||
+      (s?.party?.company_name?.toLowerCase()?.includes(searchTxt)) ||
+      (Array.isArray(s?.product_id) && s?.product_id[0]?.name?.toLowerCase()?.includes(searchTxt)) ||
+      (s?.product_qty?.toString()?.includes(searchTxt)) ||
+      (s?.price?.toString()?.includes(searchTxt)) ||
+      (s?.GST?.toString()?.includes(searchTxt)) ||
+      (s?.createdAt && new Date(s?.createdAt)?.toISOString()?.substring(0,10)?.split("-")?.reverse()?.join("")?.includes(searchTxt?.replaceAll("/", "") || ""))
+    );
+    setFilteredSales(results);
+  }, [salesSearchKey]);
+
   if (!isAllowed) {
     return (
       <div className="text-center text-red-500">
@@ -521,6 +764,7 @@ const Approvals: React.FC = () => {
     { id: "sellers", label: "Suppliers" },
     { id: "boms", label: "BOMs" },
     { id: "bomRMs", label: "BOM Raw Materials" },
+    { id: "sales", label: "Sales" },
   ];
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.background.page }}>
@@ -632,6 +876,7 @@ const Approvals: React.FC = () => {
                 products={filteredProducts}
                 deleteProductHandler={deleteProductHandler}
                 approveProductHandler={approveProductHandler}
+                bulkApproveProductsHandler={bulkApproveProductsHandler}
               />
             </div>
           </div>
@@ -701,11 +946,13 @@ const Approvals: React.FC = () => {
                 </div>
 
                 <div className="overflow-hidden">
-                  <StoreTable
-                    isLoadingStores={isLoadingStores}
-                    stores={filteredStores}
-                    deleteStoreHandler={deleteStoreHandler}
-                  />
+              <StoreTable
+                isLoadingStores={isLoadingStores}
+                stores={filteredStores}
+                deleteStoreHandler={deleteStoreHandler}
+                approveStoreHandler={approveStoreHandler}
+                bulkApproveStoresHandler={bulkApproveStoresHandler}
+              />
                 </div>
               </div>
         )}
@@ -724,18 +971,21 @@ const Approvals: React.FC = () => {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                  <h2
-                    className="text-xl font-semibold"
-                    style={{ color: colors.text.primary }}
-                  >
-                    Buyers for Approval
-                  </h2>
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: colors.text.secondary }}
-                  >
-                    Review and approve pending buyers
-                  </p>
+                      <h2
+                        className="text-xl font-semibold"
+                        style={{ color: colors.text.primary }}
+                      >
+                        Buyers for Approval
+                      </h2>
+                      <p
+                        className="text-sm mt-1"
+                        style={{ color: colors.text.secondary }}
+                      >
+                        Review and approve pending buyers
+                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
+                          Pending: {buyers?.length || 0}
+                        </span>
+                      </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -777,8 +1027,8 @@ const Approvals: React.FC = () => {
               <AgentTable
                 isLoadingAgents={isLoadingBuyers}
                 agents={filteredBuyers}
-                deleteAgentHandler={deleteAgentHandler}
                 approveAgentHandler={approveAgentHandler}
+                bulkApproveAgentsHandler={bulkApproveAgentsHandler}
               />
             </div>
           </div>
@@ -798,18 +1048,21 @@ const Approvals: React.FC = () => {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                  <h2
-                    className="text-xl font-semibold"
-                    style={{ color: colors.text.primary }}
-                  >
-                    Suppliers for Approval
-                  </h2>
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: colors.text.secondary }}
-                  >
-                    Review and approve pending suppliers
-                  </p>
+                      <h2
+                        className="text-xl font-semibold"
+                        style={{ color: colors.text.primary }}
+                      >
+                        Suppliers for Approval
+                      </h2>
+                      <p
+                        className="text-sm mt-1"
+                        style={{ color: colors.text.secondary }}
+                      >
+                        Review and approve pending suppliers
+                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
+                          Pending: {sellers?.length || 0}
+                        </span>
+                      </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -851,12 +1104,13 @@ const Approvals: React.FC = () => {
               <AgentTable
                 isLoadingAgents={isLoadingSellers}
                 agents={filteredSellers}
-                deleteAgentHandler={deleteAgentHandler}
                 approveAgentHandler={approveAgentHandler}
+                bulkApproveAgentsHandler={bulkApproveAgentsHandler}
               />
             </div>
           </div>
         )}
+
 
         {activeSection === "boms" && (
           <div
@@ -927,6 +1181,8 @@ const Approvals: React.FC = () => {
                 boms={filteredBoms}
                 deleteBomHandler={deleteBomHandler}
                 approveBomHandler={approveBomHandler}
+                bulkApproveBomsHandler={bulkApproveBomsHandler}
+                refreshBoms={fetchUnapprovedBomsHandler}
               />
             </div>
           </div>
@@ -995,12 +1251,150 @@ const Approvals: React.FC = () => {
               </div>
             </div>
 
-            <div className="overflow-hidden">
+              <div className="overflow-hidden">
               <BOMRawMaterialTable
                 isLoadingProducts={isLoadingBomRMs}
                 products={filteredBomRMs}
                 approveProductHandler={approveBomRMHandler}
               />
+              </div>
+            </div>
+          )}
+
+        {activeSection === "sales" && (
+          <div
+            className="rounded-xl shadow-sm border border-gray-100 mb-6"
+            style={{
+              backgroundColor: colors.background.card,
+              borderColor: colors.border.light,
+            }}
+          >
+            <div className="p-6 border-b" style={{ borderColor: colors.border.light }}>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>
+                    Sales for Approval
+                  </h2>
+                  <p className="text-sm mt-1" style={{ color: colors.text.secondary }}>
+                    Review and approve pending sales orders
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative">
+                    <FiSearch
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                      style={{ color: colors.text.secondary }}
+                    />
+                    <input
+                      className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-3 transition-colors"
+                      style={{
+                        backgroundColor: colors.input.background,
+                        borderColor: colors.input.border,
+                        color: colors.text.primary,
+                      }}
+                      placeholder="Search sales..."
+                      value={salesSearchKey || ""}
+                      onChange={(e) => setSalesSearchKey(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={fetchUnapprovedSalesHandler}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
+                    style={{
+                      borderColor: colors.border.medium,
+                      color: colors.text.primary,
+                      backgroundColor: colors.background.card,
+                    }}
+                  >
+                    <MdOutlineRefresh size="16px" />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {selectedSales.length > 0 && (
+              <div className="flex items-center gap-3 px-6 pt-4">
+                <Button
+                  size="sm"
+                  style={{ backgroundColor: colors.success[600], color: colors.text.inverse }}
+                  _hover={{ bg: colors.success[700] }}
+                  onClick={() => bulkApproveSalesHandler(selectedSales)}
+                >
+                  Approve Selected ({selectedSales.length})
+                </Button>
+                <Button size="sm" onClick={() => setSelectedSales([])}>Clear Selection</Button>
+              </div>
+            )}
+
+            <div className="overflow-hidden">
+              <div className="max-h-[600px] overflow-y-auto">
+                <table className="min-w-full">
+                  <thead style={{ backgroundColor: colors.table.header }}>
+                    <tr>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredSales.length > 0 && selectedSales.length === filteredSales.length}
+                          ref={(el) => {
+                            if (el) (el as any).indeterminate = selectedSales.length > 0 && selectedSales.length < filteredSales.length;
+                          }}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedSales(filteredSales.map((s: any) => s._id));
+                            else setSelectedSales([]);
+                          }}
+                        />
+                      </th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Order ID</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Party</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Product</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Qty</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Price</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>GST</th>
+                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoadingSales ? (
+                      <tr><td className="px-4 py-4" colSpan={8}>Loading...</td></tr>
+                    ) : filteredSales.length === 0 ? (
+                      <tr><td className="px-4 py-4" colSpan={8}>No pending sales</td></tr>
+                    ) : (
+                      filteredSales.map((row: any, index: number) => (
+                        <tr
+                          key={row._id}
+                          style={{
+                            backgroundColor:
+                              index % 2 === 0
+                                ? colors.background.card
+                                : colors.table.stripe,
+                          }}
+                        >
+                          <td className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedSales.includes(row._id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedSales((prev) => [...prev, row._id]);
+                                else setSelectedSales((prev) => prev.filter((x) => x !== row._id));
+                              }}
+                            />
+                          </td>
+                          <td className="px-4 py-3">{row.order_id}</td>
+                          <td className="px-4 py-3">{row?.party?.company_name || "-"}</td>
+                          <td className="px-4 py-3">{Array.isArray(row?.product_id) ? row?.product_id[0]?.name : "-"}</td>
+                          <td className="px-4 py-3">{row.product_qty}</td>
+                          <td className="px-4 py-3">{row.price}</td>
+                          <td className="px-4 py-3">{row.GST}</td>
+                          <td className="px-4 py-3">
+                            <Button size="sm" onClick={() => approveSaleHandler(row._id)}>Approve</Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

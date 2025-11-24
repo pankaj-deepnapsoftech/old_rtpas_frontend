@@ -68,6 +68,7 @@ import Resources from "../pages/Resources";
 import ProductionStatus from "../pages/ProductionStatus";
 // import ProductionDashboard from "../pages/ProductionDashboard";
 import MachineStatus from "../pages/MachineStatus";
+import UpcomingSales from "../pages/UpcomingSales";
 // import DesignerDashboard from "../pages/DesignerDashboard";
 import Sensors from "../pages/Sensors";
 
@@ -219,6 +220,12 @@ const routes = [
         icon: <VscServerProcess />,
         path: "production-status",
         element: <ProductionStatus />,
+      },
+      {
+        name: "Upcoming Sales",
+        icon: <Calendar />,
+        path: "upcoming-sales",
+        element: <UpcomingSales />,
       },
     ],
     isSublink: true,

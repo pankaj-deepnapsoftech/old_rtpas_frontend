@@ -20,6 +20,7 @@ import {
   Cell,
 } from "react-table";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
+import { FiEdit, FiTrash2 } from "react-icons/fi";
 import moment from "moment";
 import Loading from "../../ui/Loading";
 import EmptyData from "../../ui/emptyData";
@@ -27,33 +28,41 @@ import { colors } from "../../theme/colors";
 
 interface ScrapTableProps {
   scraps: Array<{
-    item: { name: string };
-    bom: { bom_name: string; finished_good: { item: { name: string } } };
-    estimated_quantity: string;
-    produced_quantity: string;
-    total_part_cost: string;
+    _id: string;
+    Scrap_name: string;
+    Scrap_id: string;
+    price: number;
+    Extract_from: string;
+    Category: string;
+    qty: number;
+    description: string;
     createdAt: string;
     updatedAt: string;
   }>;
   isLoadingScraps: boolean;
-  openScrapDetailsDrawerHandler?: (id: string) => void;
+  onEditScrap?: (scrap: any) => void;
+  onDeleteScrap?: (scrapId: string) => void;
 }
 
 const ScrapTable: React.FC<ScrapTableProps> = ({
   scraps,
   isLoadingScraps,
-  openScrapDetailsDrawerHandler,
+  onEditScrap,
+  onDeleteScrap,
+  setPageSize,
 }) => {
   const columns: Column<any>[] = useMemo(
     () => [
-      { Header: "Item", accessor: "item" },
-      { Header: "BOM", accessor: "bom" },
-      { Header: "Finished Good", accessor: "finished_good" },
-      { Header: "Estimated Quantity", accessor: "estimated_quantity" },
-      { Header: "Produced Quantity", accessor: "produced_quantity" },
-      { Header: "Total Part Cost", accessor: "total_part_cost" },
+      { Header: "Scrap ID", accessor: "Scrap_id" },
+      { Header: "Name", accessor: "Scrap_name" },
+      { Header: "Category", accessor: "Category" },
+      { Header: "Extract From", accessor: "Extract_from" },
+      { Header: "Quantity", accessor: "qty" },
+      { Header: "Price", accessor: "price" },
+      { Header: "Description", accessor: "description" },
       { Header: "Created On", accessor: "createdAt" },
       { Header: "Last Updated", accessor: "updatedAt" },
+      { Header: "Actions", accessor: "actions", disableSortBy: true },
     ],
     []
   );
@@ -69,18 +78,18 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
     canNextPage,
     canPreviousPage,
     state: { pageIndex },
-    setPageSize,
     pageCount,
   }: TableInstance<any> = useTable(
     {
       columns,
-      data: scraps,
+      data: Array.isArray(scraps) ? scraps : [],
       initialState: { pageIndex: 0, pageSize: 10 },
     },
     useSortBy,
     usePagination
   );
-
+  console.log("Scraps in Table:", scraps);
+  console.log("Page Size:", page);
   const dynamicBg = (index: number) =>
     index % 2 !== 0 ? "#ffffff40" : "#ffffff1f";
 
@@ -126,7 +135,6 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
 
   return (
     <div className="p-6">
-      {/* Header with count and page size selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-6">
           <div>
@@ -155,7 +163,7 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
               color: colors.gray[800],
             }}
           >
-            {[10, 20, 50, 100, 100000].map((size) => (
+            {[10, 20, 50, 100].map((size) => (
               <option key={size} value={size}>
                 {size === 100000 ? "All" : size}
               </option>
@@ -164,7 +172,6 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
         </div>
       </div>
 
-      {/* Enhanced Table */}
       <div
         className="rounded-xl shadow-sm overflow-hidden"
         style={{
@@ -224,34 +231,29 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
                     }}
                     _hover={{
                       bg: colors.gray[100],
-                      cursor: openScrapDetailsDrawerHandler
-                        ? "pointer"
-                        : "default",
                     }}
-                    onClick={() =>
-                      openScrapDetailsDrawerHandler?.(row.original.id)
-                    }
                   >
                     {row.cells.map((cell: Cell) => {
                       const colId = cell.column.id;
                       const original = row.original;
 
                       let displayValue;
-                      if (colId === "item") {
-                        displayValue = original.item?.name || "N/A";
-                      } else if (colId === "bom") {
-                        displayValue = original.bom?.bom_name || "N/A";
-                      } else if (colId === "finished_good") {
-                        displayValue =
-                          original.bom?.finished_good?.item?.name || "N/A";
-                      } else if (colId === "estimated_quantity") {
-                        displayValue = original.estimated_quantity || "0";
-                      } else if (colId === "produced_quantity") {
-                        displayValue = original.produced_quantity || "0";
-                      } else if (colId === "total_part_cost") {
-                        displayValue = original.total_part_cost
-                          ? `₹${original.total_part_cost}`
+                      if (colId === "Scrap_id") {
+                        displayValue = original.Scrap_id || "N/A";
+                      } else if (colId === "Scrap_name") {
+                        displayValue = original.Scrap_name || "N/A";
+                      } else if (colId === "Category") {
+                        displayValue = original.Category || "N/A";
+                      } else if (colId === "Extract_from") {
+                        displayValue = original.Extract_from || "N/A";
+                      } else if (colId === "qty") {
+                        displayValue = original.qty || "0";
+                      } else if (colId === "price") {
+                        displayValue = original.price
+                          ? `₹${original.price}`
                           : "₹0";
+                      } else if (colId === "description") {
+                        displayValue = original.description || "N/A";
                       } else if (colId === "createdAt") {
                         displayValue = original.createdAt
                           ? moment(original.createdAt).format("DD/MM/YYYY")
@@ -260,6 +262,34 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
                         displayValue = original.updatedAt
                           ? moment(original.updatedAt).format("DD/MM/YYYY")
                           : "N/A";
+                      } else if (colId === "actions") {
+                        displayValue = (
+                          <div
+                            className="flex items-center gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditScrap?.(original);
+                              }}
+                              className="p-2 rounded-lg transition-colors duration-200 hover:bg-blue-100 text-blue-600"
+                              title="Edit Scrap"
+                            >
+                              <FiEdit size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteScrap?.(original._id);
+                              }}
+                              className="p-2 rounded-lg transition-colors duration-200 hover:bg-red-100 text-red-600"
+                              title="Delete Scrap"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          </div>
+                        );
                       } else {
                         displayValue = cell.render("Cell");
                       }
@@ -273,7 +303,11 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
                             borderBottom: `1px solid ${colors.gray[200]}`,
                           }}
                           title={
-                            typeof displayValue === "string" ? displayValue : ""
+                            colId === "actions"
+                              ? ""
+                              : typeof displayValue === "string"
+                              ? displayValue
+                              : ""
                           }
                         >
                           {displayValue}
@@ -288,7 +322,6 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
         </div>
       </div>
 
-      {/* Enhanced Pagination */}
       <div className="flex items-center justify-center gap-4 mt-4">
         <button
           onClick={previousPage}

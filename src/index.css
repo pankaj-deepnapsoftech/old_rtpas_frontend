@@ -129,3 +129,165 @@ input[type="number"] {
 .smooth-transition {
   transition: all 0.2s ease-in-out;
 }
+
+
+/* -------------------------------------------------------------------------------- */
+
+/* @import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Varela+Round&display=swap");
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl,
+.rounded-full,
+.rounded-t,
+.rounded-r,
+.rounded-b,
+.rounded-l,
+.rounded-tl,
+.rounded-tr,
+.rounded-br,
+.rounded-bl {
+  border-radius: 0 !important;
+}
+
+input,
+button,
+select,
+textarea,
+.chakra-input,
+.chakra-button,
+.chakra-select,
+.chakra-textarea {
+  border-radius: 0 !important;
+}
+
+.card,
+.container,
+.drawer,
+.modal,
+.popup,
+.dropdown,
+.tooltip,
+.badge,
+.alert,
+.toast,
+div[role="dialog"],
+div[role="menu"],
+div[role="tooltip"] {
+  border-radius: 0 !important;
+}
+
+div,
+span,
+section,
+article,
+aside,
+header,
+footer,
+nav,
+main,
+table,
+tr,
+td,
+th {
+  border-radius: 0 !important;
+}
+
+.css-1n7v3ny,
+.css-8atqhb,
+.css-1wits42 {
+  border-radius: 0 !important;
+}
+
+* {
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background-color: #fbfbfb !important;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 99vh;
+}
+
+.subscription-font {
+  font-family: "Rubik", sans-serif;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.styled-date::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  cursor: pointer;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.card-hover-effect {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.smooth-transition {
+  transition: all 0.2s ease-in-out;
+} */

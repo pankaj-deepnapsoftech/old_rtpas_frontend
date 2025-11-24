@@ -13,7 +13,7 @@ import {
   Toast,
 } from "@chakra-ui/react";
 import moment from "moment";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   FaCaretDown,
   FaCaretUp,
@@ -291,6 +291,8 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
     return index % 2 !== 0 ? colors.table.stripe : colors.background.card;
   };
 
+  
+
   if (isLoadingProducts) {
     return <Loading />;
   }
@@ -330,6 +332,8 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
             </Select>
           </div>
 
+          
+
           {/* Table */}
           <TableContainer
             style={{
@@ -348,10 +352,11 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                 top="0"
                 zIndex="1"
               >
-                {headerGroups.map((hg: HeaderGroup<any>) => (
-                  <Tr {...hg.getHeaderGroupProps()}>
-                    {hg?.headers.map((column: any) => (
-                      <Th
+              {headerGroups.map((hg: HeaderGroup<any>) => (
+                <Tr {...hg.getHeaderGroupProps()}>
+                  
+                  {hg?.headers.map((column: any) => (
+                    <Th
                         {...column.getHeaderProps(
                           column.getSortByToggleProps()
                         )}
@@ -407,6 +412,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                       }}
                       _hover={{ bg: colors.table.hover }}
                     >
+                      
                       {row.cells.map((cell: Cell) => {
                         const colId = cell.column.id;
                         let displayValue;

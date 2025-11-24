@@ -230,10 +230,12 @@ const toWords = new ToWords({
   },
 });
 
-const SalesOrderPDF = ({ sale,userData }: any) => {
-  const subtotal = sale.price * sale.product_qty;
-  const gstAmount = (subtotal * sale.GST) / 100;
+const SalesOrderPDF = ({ sale, userData }: any) => {
+  const safeSale = sale || {};
+  const subtotal = Number(safeSale.price || 0) * Number(safeSale.product_qty || 0);
+  const gstAmount = (subtotal * Number(safeSale.GST || 0)) / 100;
   const total = subtotal + gstAmount;
+  const safeUser = userData || {};
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -263,23 +265,22 @@ const SalesOrderPDF = ({ sale,userData }: any) => {
           <View style={styles.headerRow}>
             <View style={styles.companySection}>
               <Text style={styles.sectionLabel}>Company Name</Text>
-              <Text style={styles.sectionValue}>{userData?.cpny_name
-}</Text>
+              <Text style={styles.sectionValue}>{safeUser?.cpny_name || ""}</Text>
             </View>
             <View style={styles.paymentSection}>
               <Text style={styles.sectionLabel}>Mode of Payment</Text>
               <Text style={styles.sectionValue}>
-                {sale.mode_of_payment || "N/A"}
+                {safeSale.mode_of_payment || "N/A"}
               </Text>
             </View>
             <View style={styles.orderDetailsSection}>
               <Text style={styles.sectionLabel}>Order No</Text>
-              <Text style={styles.sectionValue}>{sale.order_id}</Text>
+              <Text style={styles.sectionValue}>{safeSale.order_id || ""}</Text>
             </View>
             <View style={styles.dateSection}>
               <Text style={styles.sectionLabel}>Date</Text>
               <Text style={styles.sectionValue}>
-                {new Date(sale.createdAt).toLocaleDateString()}
+                {safeSale.createdAt ? new Date(safeSale.createdAt).toLocaleDateString() : ""}
               </Text>
             </View>
           </View>
@@ -299,7 +300,7 @@ const SalesOrderPDF = ({ sale,userData }: any) => {
           <View style={styles.tableRow}>
             <Text style={styles.col1}>1</Text>
             <Text style={styles.col2}>
-              {sale.product_id?.[0]?.name || "N/A"}
+              {safeSale.product_id?.[0]?.name || "N/A"}
             </Text>
             <Text style={styles.col3}>{sale.product_qty}</Text>
             <Text style={styles.col4}>{subtotal.toFixed(2)}</Text>
@@ -343,9 +344,9 @@ const SalesOrderPDF = ({ sale,userData }: any) => {
           <View style={styles.bankDetailsAboveSignature}>
             <Text style={styles.bankLabel}>Company Bank Details:</Text>
             <Text style={styles.bankDetails}>
-              Bank Name: {userData.Bank_Name}{"\n"}
-              Account No.: {userData.Account_No}{"\n"}
-              IFSC Code: {userData.IFSC_Code}
+              Bank Name: {safeUser?.Bank_Name || "N/A"}{"\n"}
+              Account No.: {safeUser?.Account_No || "N/A"}{"\n"}
+              IFSC Code: {safeUser?.IFSC_Code || "N/A"}
             </Text>
           </View>
           <View style={styles.signatureBox}>
