@@ -204,6 +204,12 @@ const routes = [
     icon: <MdOutlineProductionQuantityLimits />,
     sublink: [
       {
+        name: "Upcoming Sales",
+        icon: <Calendar />,
+        path: "upcoming-sales",
+        element: <UpcomingSales />,
+      },
+      {
         name: "BOM",
         icon: <RiBillLine />,
         path: "bom",
@@ -221,12 +227,7 @@ const routes = [
         path: "production-status",
         element: <ProductionStatus />,
       },
-      {
-        name: "Upcoming Sales",
-        icon: <Calendar />,
-        path: "upcoming-sales",
-        element: <UpcomingSales />,
-      },
+     
     ],
     isSublink: true,
   },
