@@ -183,6 +183,7 @@ const UpcomingSales: React.FC = () => {
                 >
                   Quantity
                 </th>
+                {/*
                 <th
                   className="px-4 py-3 text-left font-semibold"
                   style={{ color: colors.table.headerText }}
@@ -213,6 +214,7 @@ const UpcomingSales: React.FC = () => {
                 >
                   BOM Status
                 </th>
+                */}
                 <th
                   className="px-4 py-3 text-left font-semibold"
                   style={{ color: colors.table.headerText }}
@@ -226,7 +228,7 @@ const UpcomingSales: React.FC = () => {
                 <tr>
                   <td
                     className="px-4 py-8 text-center"
-                    colSpan={10}
+                    colSpan={5}
                     style={{ color: colors.text.secondary }}
                   >
                     Loading...
@@ -236,7 +238,7 @@ const UpcomingSales: React.FC = () => {
                 <tr>
                   <td
                     className="px-4 py-8 text-center"
-                    colSpan={10}
+                    colSpan={5}
                     style={{ color: colors.text.secondary }}
                   >
                     No upcoming sales found
@@ -265,6 +267,7 @@ const UpcomingSales: React.FC = () => {
                     <td className="px-4 py-3" style={{ color: colors.text.primary }}>
                       {sale.product_qty} {sale.uom || ""}
                     </td>
+                    {/*
                     <td className="px-4 py-3" style={{ color: colors.text.primary }}>
                       ₹{sale.price?.toFixed(2) || "0.00"}
                     </td>
@@ -300,6 +303,7 @@ const UpcomingSales: React.FC = () => {
                         </span>
                       )}
                     </td>
+                    */}
                     <td className="px-4 py-3" style={{ color: colors.text.secondary }}>
                       {sale.createdAt
                         ? new Date(sale.createdAt).toLocaleDateString("en-IN", {
