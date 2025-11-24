@@ -62,14 +62,16 @@ const Approvals: React.FC = () => {
   const [bomRMs, setBomRMs] = useState<any>([]);
   const [filteredBomRMs, setFilteredBomRMs] = useState<any>([]);
   const [isLoadingBomRMs, setIsLoadingBomRMs] = useState<boolean>(false);
-
+   const [currentStock,setCurrentStock] = useState(null)
   //  Sales (Unapproved)
   const [salesSearchKey, setSalesSearchKey] = useState<string | undefined>();
   const [sales, setSales] = useState<any>([]);
   const [filteredSales, setFilteredSales] = useState<any>([]);
   const [isLoadingSales, setIsLoadingSales] = useState<boolean>(false);
   const [selectedSales, setSelectedSales] = useState<string[]>([]);
-
+  const [openModal, setOpenModal] = useState(false)
+  const [modalInput, setModalInput] = useState("")
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null)
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteStore] = useDeleteStoresMutation();
@@ -78,7 +80,7 @@ const Approvals: React.FC = () => {
   const [updateAgent] = useUpdateAgentMutation();
   const [deleteBom] = useDeleteBomMutation();
   const [updateBom] = useUpdateBOMMutation();
-
+  console.log("Modal",openModal)
   // For Unapproved Products
   const fetchUnapprovedProductsHandler = async () => {
     try {
@@ -555,6 +557,29 @@ const Approvals: React.FC = () => {
     fetchUnapprovedSalesHandler();
   }, []);
 
+  const handleModalSubmit = async (input: string) => {
+    try {
+      if (!selectedSaleId) return;
+      const res = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `sale/update/${selectedSaleId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ terms_of_delivery: input }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to update sale");
+      await approveSaleHandler(selectedSaleId);
+      setModalInput("");
+      setSelectedSaleId(null);
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
+  };
+
 
   // Product Search
   useEffect(() => {
@@ -700,7 +725,7 @@ const Approvals: React.FC = () => {
     setFilteredSellers(results);
   }, [sellerSearchKey]);
 
-  
+
 
   // BOM Search
   useEffect(() => {
@@ -744,7 +769,7 @@ const Approvals: React.FC = () => {
       (s?.product_qty?.toString()?.includes(searchTxt)) ||
       (s?.price?.toString()?.includes(searchTxt)) ||
       (s?.GST?.toString()?.includes(searchTxt)) ||
-      (s?.createdAt && new Date(s?.createdAt)?.toISOString()?.substring(0,10)?.split("-")?.reverse()?.join("")?.includes(searchTxt?.replaceAll("/", "") || ""))
+      (s?.createdAt && new Date(s?.createdAt)?.toISOString()?.substring(0, 10)?.split("-")?.reverse()?.join("")?.includes(searchTxt?.replaceAll("/", "") || ""))
     );
     setFilteredSales(results);
   }, [salesSearchKey]);
@@ -756,7 +781,7 @@ const Approvals: React.FC = () => {
       </div>
     );
   }
- 
+
   const sections = [
     { id: "products", label: "Products" },
     { id: "stores", label: "Stores" },
@@ -769,7 +794,7 @@ const Approvals: React.FC = () => {
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.background.page }}>
       <div className="p-2 lg:p-3">
-      
+
         <div
           className="rounded-xl shadow-sm border p-6 mb-6"
           style={{
@@ -787,7 +812,7 @@ const Approvals: React.FC = () => {
           </div>
         </div>
 
-       
+
         <div className="flex flex-wrap gap-3 mb-6">
           {sections.map((section) => (
             <button
@@ -884,68 +909,68 @@ const Approvals: React.FC = () => {
 
         {activeSection === "stores" && (
           <div
-                className="rounded-xl shadow-sm border border-gray-100 mb-6"
-                style={{
-                  backgroundColor: colors.background.card,
-                  borderColor: colors.border.light,
-                }}
-              >
-                <div
-                  className="p-6 border-b"
-                  style={{ borderColor: colors.border.light }}
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                      <h2
-                        className="text-xl font-semibold"
-                        style={{ color: colors.text.primary }}
-                      >
-                        Stores for Approval
-                      </h2>
-                      <p
-                        className="text-sm mt-1"
-                        style={{ color: colors.text.secondary }}
-                      >
-                        Review and approve pending stores
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <div className="relative">
-                        <FiSearch
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2"
-                          style={{ color: colors.text.secondary }}
-                        />
-                        <input
-                          className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-3 transition-colors"
-                          style={{
-                            backgroundColor: colors.input.background,
-                            borderColor: colors.input.border,
-                            color: colors.text.primary,
-                          }}
-                          placeholder="Search stores..."
-                          value={storeSearchKey || ""}
-                          onChange={(e) => setStoreSearchKey(e.target.value)}
-                        />
-                      </div>
-
-                      <button
-                        onClick={fetchUnapprovedStoresHandler}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
-                        style={{
-                          borderColor: colors.border.medium,
-                          color: colors.text.primary,
-                          backgroundColor: colors.background.card,
-                        }}
-                      >
-                        <MdOutlineRefresh size="16px" />
-                        Refresh
-                      </button>
-                    </div>
-                  </div>
+            className="rounded-xl shadow-sm border border-gray-100 mb-6"
+            style={{
+              backgroundColor: colors.background.card,
+              borderColor: colors.border.light,
+            }}
+          >
+            <div
+              className="p-6 border-b"
+              style={{ borderColor: colors.border.light }}
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: colors.text.primary }}
+                  >
+                    Stores for Approval
+                  </h2>
+                  <p
+                    className="text-sm mt-1"
+                    style={{ color: colors.text.secondary }}
+                  >
+                    Review and approve pending stores
+                  </p>
                 </div>
 
-                <div className="overflow-hidden">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative">
+                    <FiSearch
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                      style={{ color: colors.text.secondary }}
+                    />
+                    <input
+                      className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-3 transition-colors"
+                      style={{
+                        backgroundColor: colors.input.background,
+                        borderColor: colors.input.border,
+                        color: colors.text.primary,
+                      }}
+                      placeholder="Search stores..."
+                      value={storeSearchKey || ""}
+                      onChange={(e) => setStoreSearchKey(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    onClick={fetchUnapprovedStoresHandler}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
+                    style={{
+                      borderColor: colors.border.medium,
+                      color: colors.text.primary,
+                      backgroundColor: colors.background.card,
+                    }}
+                  >
+                    <MdOutlineRefresh size="16px" />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-hidden">
               <StoreTable
                 isLoadingStores={isLoadingStores}
                 stores={filteredStores}
@@ -953,8 +978,8 @@ const Approvals: React.FC = () => {
                 approveStoreHandler={approveStoreHandler}
                 bulkApproveStoresHandler={bulkApproveStoresHandler}
               />
-                </div>
-              </div>
+            </div>
+          </div>
         )}
 
         {activeSection === "buyers" && (
@@ -971,21 +996,21 @@ const Approvals: React.FC = () => {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                      <h2
-                        className="text-xl font-semibold"
-                        style={{ color: colors.text.primary }}
-                      >
-                        Buyers for Approval
-                      </h2>
-                      <p
-                        className="text-sm mt-1"
-                        style={{ color: colors.text.secondary }}
-                      >
-                        Review and approve pending buyers
-                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
-                          Pending: {buyers?.length || 0}
-                        </span>
-                      </p>
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: colors.text.primary }}
+                  >
+                    Buyers for Approval
+                  </h2>
+                  <p
+                    className="text-sm mt-1"
+                    style={{ color: colors.text.secondary }}
+                  >
+                    Review and approve pending buyers
+                    <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
+                      Pending: {buyers?.length || 0}
+                    </span>
+                  </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -1048,21 +1073,21 @@ const Approvals: React.FC = () => {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                      <h2
-                        className="text-xl font-semibold"
-                        style={{ color: colors.text.primary }}
-                      >
-                        Suppliers for Approval
-                      </h2>
-                      <p
-                        className="text-sm mt-1"
-                        style={{ color: colors.text.secondary }}
-                      >
-                        Review and approve pending suppliers
-                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
-                          Pending: {sellers?.length || 0}
-                        </span>
-                      </p>
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: colors.text.primary }}
+                  >
+                    Suppliers for Approval
+                  </h2>
+                  <p
+                    className="text-sm mt-1"
+                    style={{ color: colors.text.secondary }}
+                  >
+                    Review and approve pending suppliers
+                    <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded" style={{ backgroundColor: colors.success[100], color: colors.success[800] }}>
+                      Pending: {sellers?.length || 0}
+                    </span>
+                  </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -1251,15 +1276,15 @@ const Approvals: React.FC = () => {
               </div>
             </div>
 
-              <div className="overflow-hidden">
+            <div className="overflow-hidden">
               <BOMRawMaterialTable
                 isLoadingProducts={isLoadingBomRMs}
                 products={filteredBomRMs}
                 approveProductHandler={approveBomRMHandler}
               />
-              </div>
             </div>
-          )}
+          </div>
+        )}
 
         {activeSection === "sales" && (
           <div
@@ -1381,16 +1406,36 @@ const Approvals: React.FC = () => {
                             />
                           </td>
                           <td className="px-4 py-3">{row.order_id}</td>
-                          <td className="px-4 py-3">{row?.party?.company_name || "-"}</td>
+                          <td className="px-4 py-3">{row?.party?.company_name || row?.party?.consignee_name[0]}</td>
                           <td className="px-4 py-3">{Array.isArray(row?.product_id) ? row?.product_id[0]?.name : "-"}</td>
                           <td className="px-4 py-3">{row.product_qty}</td>
                           <td className="px-4 py-3">{row.price}</td>
                           <td className="px-4 py-3">{row.GST}</td>
                           <td className="px-4 py-3">
-                            <Button size="sm" onClick={() => approveSaleHandler(row._id)}>Approve</Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const currentStock = row?.product_id[0]?.current_stock;
+                                const qty = row?.product_qty;
+
+                                if (currentStock > qty) {
+                                  setOpenModal(true)
+                                  setCurrentStock({currentStock:row?.product_id[0]?.current_stock,
+                                    item_name: row?.product_id[0]?.name 
+                                  })
+                                  setSelectedSaleId(row?._id)
+                                } else {
+                                  approveSaleHandler(row?._id);
+                                }
+                              }}
+                            >
+                              Approve
+                            </Button>
                           </td>
+
                         </tr>
                       ))
+
                     )}
                   </tbody>
                 </table>
@@ -1399,6 +1444,45 @@ const Approvals: React.FC = () => {
           </div>
         )}
       </div>
+      {
+        openModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-[350px] shadow-lg">
+
+              <h2 className="text-lg font-semibold mb-3">Enter Value</h2>
+              <label>Current Stock  Available: {currentStock?.item_name} ( {currentStock?.currentStock})</label>
+              <input  
+                type="text"
+                className="border w-full px-3 py-2 rounded mb-4"
+                placeholder="Type something..."
+                value={modalInput}
+                onChange={(e) => setModalInput(e.target.value)}
+              />     
+                             
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded"
+                  onClick={() => setOpenModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  onClick={() => {
+                    handleModalSubmit(modalInput);
+                    setOpenModal(false);
+                  }}
+                >
+                  Submit
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      }
+
     </div>
   );
 };
