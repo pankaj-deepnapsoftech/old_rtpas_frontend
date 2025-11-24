@@ -11,7 +11,6 @@ import {
   Select,
 } from "@chakra-ui/react";
 import {
-  usePagination,
   useSortBy,
   useTable,
   Column,
@@ -42,6 +41,11 @@ interface ScrapTableProps {
   isLoadingScraps: boolean;
   onEditScrap?: (scrap: any) => void;
   onDeleteScrap?: (scrapId: string) => void;
+  setPage: (page: number) => void;
+  setLimit: (limit: number) => void;
+  Page: number;
+  Limit: number;
+  totalRecords?: number;
 }
 
 const ScrapTable: React.FC<ScrapTableProps> = ({
@@ -49,7 +53,11 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
   isLoadingScraps,
   onEditScrap,
   onDeleteScrap,
-  setPageSize,
+  setPage,
+  setLimit,
+  Page,
+  Limit,
+  totalRecords = 0,
 }) => {
   const columns: Column<any>[] = useMemo(
     () => [
@@ -72,24 +80,32 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
     getTableBodyProps,
     headerGroups,
     prepareRow,
-    page,
-    nextPage,
-    previousPage,
-    canNextPage,
-    canPreviousPage,
-    state: { pageIndex },
-    pageCount,
+    rows,
   }: TableInstance<any> = useTable(
     {
       columns,
       data: Array.isArray(scraps) ? scraps : [],
-      initialState: { pageIndex: 0, pageSize: 10 },
     },
-    useSortBy,
-    usePagination
+    useSortBy
   );
   console.log("Scraps in Table:", scraps);
-  console.log("Page Size:", page);
+  console.log("Page Size:", rows);
+
+  const totalPages = Math.ceil(totalRecords / Limit);
+  const canPreviousPage = Page > 1;
+  const canNextPage = Page < totalPages;
+
+  const handlePreviousPage = () => {
+    if (canPreviousPage) {
+      setPage(Page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (canNextPage) {
+      setPage(Page + 1);
+    }
+  };
   const dynamicBg = (index: number) =>
     index % 2 !== 0 ? "#ffffff40" : "#ffffff1f";
 
@@ -155,7 +171,7 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
             Show:
           </span>
           <select
-            onChange={(e) => setPageSize(Number(e.target.value))}
+            onChange={(e) => setLimit(Number(e.target.value))}
             className="px-3 py-2 text-sm rounded-lg border transition-colors"
             style={{
               backgroundColor: colors.gray[50],
@@ -216,7 +232,7 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
             </Thead>
 
             <Tbody {...getTableBodyProps()}>
-              {page.map((row: any, index: number) => {
+              {rows.map((row: any, index: number) => {
                 prepareRow(row);
                 return (
                   <Tr
@@ -324,7 +340,7 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
 
       <div className="flex items-center justify-center gap-4 mt-4">
         <button
-          onClick={previousPage}
+          onClick={handlePreviousPage}
           disabled={!canPreviousPage}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             canPreviousPage
@@ -336,11 +352,11 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
         </button>
 
         <span className="text-sm" style={{ color: colors.gray[600] }}>
-          Page {pageIndex + 1} of {pageCount}
+          Page {Page} of {totalPages}
         </span>
 
         <button
-          onClick={nextPage}
+          onClick={handleNextPage}
           disabled={!canNextPage}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             canNextPage
