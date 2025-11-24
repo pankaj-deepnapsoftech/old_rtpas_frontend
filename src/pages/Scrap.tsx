@@ -25,6 +25,8 @@ const Scrap: React.FC = () => {
   const [showBulkUploadMenu, setShowBulkUploadMenu] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
   const fileRef = useRef(null);
 
   console.log("Limit:", limit);
@@ -33,7 +35,8 @@ const Scrap: React.FC = () => {
     try {
       setIsLoadingScraps(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + `scrap/get?limit=${limit}`,
+        process.env.REACT_APP_BACKEND_URL +
+          `scrap/get?limit=${limit}&page=${page}`,
         {
           method: "GET",
           headers: {
@@ -49,6 +52,12 @@ const Scrap: React.FC = () => {
       const scrapData = Array.isArray(data.data) ? data.data : [];
       setData(scrapData);
       setFilteredData(scrapData);
+
+      if (scrapData.length < limit) {
+        setTotalRecords((page - 1) * limit + scrapData.length);
+      } else {
+        setTotalRecords(page * limit + 1);
+      }
     } catch (error: any) {
       toast.error("Something went wrong");
     } finally {
@@ -138,7 +147,7 @@ const Scrap: React.FC = () => {
 
   useEffect(() => {
     fetchScrapHandler();
-  }, [limit]);
+  }, [limit, page]);
 
   const bulkUploadHandler = async (e) => {
     e.preventDefault();
@@ -364,7 +373,14 @@ const Scrap: React.FC = () => {
             isLoadingScraps={isLoadingScraps}
             onEditScrap={handleEditScrap}
             onDeleteScrap={handleDeleteScrap}
-            setPageSize={setLimit}
+            setPage={setPage}
+            setLimit={(newLimit) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+            Page={page}
+            Limit={limit}
+            totalRecords={totalRecords}
           />
         </div>
       </div>
