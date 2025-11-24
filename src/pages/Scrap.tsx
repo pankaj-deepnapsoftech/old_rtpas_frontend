@@ -2,14 +2,17 @@
 
 import { Button } from "@chakra-ui/react";
 import { MdOutlineRefresh } from "react-icons/md";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import ScrapTable from "../components/Table/ScrapTable";
 import { toast } from "react-toastify";
 import { FiPlus, FiSearch } from "react-icons/fi";
+import { AiFillFileExcel } from "react-icons/ai";
 import { colors } from "../theme/colors";
 import { Recycle } from "lucide-react";
 import AddNewScrap from "../components/Drawers/Scrap/AddNewScrap";
+import { RxCross2 } from "react-icons/rx";
+import SampleCSV from "../assets/csv/parties-sample.csv";
 
 const Scrap: React.FC = () => {
   const [cookies] = useCookies();
@@ -19,12 +22,18 @@ const Scrap: React.FC = () => {
   const [searchKey, setSearchKey] = useState<string | undefined>();
   const [isAddScrapDrawerOpened, setIsAddScrapDrawerOpened] = useState(false);
   const [editScrap, setEditScrap] = useState(null);
+  const [showBulkUploadMenu, setShowBulkUploadMenu] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [limit, setLimit] = useState(10);
+  const fileRef = useRef(null);
+
+  console.log("Limit:", limit);
 
   const fetchScrapHandler = async () => {
     try {
       setIsLoadingScraps(true);
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "scrap/get",
+        process.env.REACT_APP_BACKEND_URL + `scrap/get?limit=${limit}`,
         {
           method: "GET",
           headers: {
@@ -36,10 +45,12 @@ const Scrap: React.FC = () => {
       if (!data.message) {
         throw new Error(data.message || "Failed to fetch scraps");
       }
-      setData(data.data || []);
-      setFilteredData(data.data || []);
+
+      const scrapData = Array.isArray(data.data) ? data.data : [];
+      setData(scrapData);
+      setFilteredData(scrapData);
     } catch (error: any) {
-      toast.error(error?.message || "Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setIsLoadingScraps(false);
     }
@@ -56,22 +67,123 @@ const Scrap: React.FC = () => {
   };
 
   const handleScrapCreated = (newScrap) => {
-    const updatedScraps = [newScrap, ...data];
+    const formattedScrap = {
+      _id: newScrap._id,
+      Scrap_name: newScrap.Scrap_name || "",
+      Scrap_id: newScrap.Scrap_id || "",
+      price: newScrap.price || 0,
+      Extract_from: newScrap.Extract_from || "",
+      Category: newScrap.Category || "",
+      qty: newScrap.qty || 0,
+      description: newScrap.description || "",
+      createdAt: newScrap.createdAt || new Date().toISOString(),
+      updatedAt: newScrap.updatedAt || new Date().toISOString(),
+    };
+
+    const updatedScraps = [formattedScrap, ...data];
     setData(updatedScraps);
     setFilteredData(updatedScraps);
   };
 
   const handleScrapUpdated = (updatedScrap) => {
+    const formattedScrap = {
+      _id: updatedScrap._id,
+      Scrap_name: updatedScrap.Scrap_name || "",
+      Scrap_id: updatedScrap.Scrap_id || "",
+      price: updatedScrap.price || 0,
+      Extract_from: updatedScrap.Extract_from || "",
+      Category: updatedScrap.Category || "",
+      qty: updatedScrap.qty || 0,
+      description: updatedScrap.description || "",
+      createdAt: updatedScrap.createdAt || new Date().toISOString(),
+      updatedAt: updatedScrap.updatedAt || new Date().toISOString(),
+    };
+
     const updatedScraps = data.map((scrap) =>
-      scrap._id === updatedScrap._id ? updatedScrap : scrap
+      scrap._id === formattedScrap._id ? formattedScrap : scrap
     );
     setData(updatedScraps);
     setFilteredData(updatedScraps);
   };
 
+  const handleEditScrap = (scrap) => {
+    setEditScrap(scrap);
+    setIsAddScrapDrawerOpened(true);
+  };
+
+  const handleDeleteScrap = async (scrapId) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}scrap/delete/${scrapId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const updatedScraps = data.filter((scrap) => scrap._id !== scrapId);
+        setData(updatedScraps);
+        setFilteredData(updatedScraps);
+        toast.success("Scrap deleted successfully");
+      } else {
+        throw new Error("Failed to delete scrap");
+      }
+    } catch (error) {
+      toast.error("Failed to delete scrap");
+    }
+  };
+
   useEffect(() => {
     fetchScrapHandler();
-  }, []);
+  }, [limit]);
+
+  const bulkUploadHandler = async (e) => {
+    e.preventDefault();
+
+    const file = fileRef?.current?.files?.[0];
+    if (!file) {
+      toast.error("CSV file not selected");
+      return;
+    }
+
+    try {
+      setBulkUploading(true);
+      const formData = new FormData();
+      formData.append("excel", file);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}scrap/bulk-upload`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Something went wrong");
+      }
+
+      toast.success(result.message);
+      setShowBulkUploadMenu(false);
+      fetchScrapHandler();
+
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setBulkUploading(false);
+    }
+  };
 
   useEffect(() => {
     const searchTxt = searchKey?.toLowerCase();
@@ -148,6 +260,22 @@ const Scrap: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowBulkUploadMenu(true)}
+                className="flex items-center gap-2 px-6 py-3 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                style={{
+                  backgroundColor: colors.warning[600],
+                  focusRingColor: colors.warning[500],
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.warning[700];
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.warning[600];
+                }}
+              >
+                <AiFillFileExcel size={20} /> Bulk Upload
+              </button>
               <button
                 onClick={openAddScrapDrawerHandler}
                 style={{
@@ -234,7 +362,9 @@ const Scrap: React.FC = () => {
           <ScrapTable
             scraps={filteredData}
             isLoadingScraps={isLoadingScraps}
-            openScrapDetailsDrawerHandler={() => {}}
+            onEditScrap={handleEditScrap}
+            onDeleteScrap={handleDeleteScrap}
+            setPageSize={setLimit}
           />
         </div>
       </div>
@@ -246,6 +376,89 @@ const Scrap: React.FC = () => {
           fetchScrapsHandler={fetchScrapHandler}
           editScrap={editScrap}
         />
+      )}
+
+      {showBulkUploadMenu && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div
+            className="rounded-xl shadow-xl max-w-md w-full p-6"
+            style={{ backgroundColor: colors.background.card }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                className="text-lg font-semibold"
+                style={{ color: colors.text.primary }}
+              >
+                Bulk Upload Merchants
+              </h3>
+              <button
+                onClick={() => setShowBulkUploadMenu(false)}
+                className="p-1 rounded-lg transition-colors"
+                style={{ color: colors.text.secondary }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.gray[100];
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <RxCross2 size="20px" />
+              </button>
+            </div>
+
+            <form onSubmit={bulkUploadHandler}>
+              <div className="mb-4">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: colors.text.primary }}
+                >
+                  Choose File (.csv or .xlsx)
+                </label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv, .xlsx"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-3 transition-colors"
+                  style={{
+                    backgroundColor: colors.input.background,
+                    borderColor: colors.input.border,
+                    color: colors.text.primary,
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={bulkUploading}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  style={{
+                    backgroundColor: colors.button.primary,
+                    color: colors.text.inverse,
+                  }}
+                >
+                  {bulkUploading ? "Uploading..." : "Upload"}
+                  <AiFillFileExcel size="16px" />
+                </button>
+
+                <a href={SampleCSV} className="flex-1">
+                  <button
+                    type="button"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
+                    style={{
+                      borderColor: colors.border.medium,
+                      color: colors.text.primary,
+                      backgroundColor: colors.background.card,
+                    }}
+                  >
+                    Sample CSV
+                    <AiFillFileExcel size="16px" />
+                  </button>
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

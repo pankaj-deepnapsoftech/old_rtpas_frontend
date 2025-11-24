@@ -1678,7 +1678,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                     >
                       {isUpdating ? "Updating..." : submitBtnText}
                     </button>
-                    {submitBtnText === "Update" && showMarkAsDone && (
+                    {/* {submitBtnText === "Update" && showMarkAsDone && (
                       <button
                         // disabled={
                         //   isCompleted ||
@@ -1695,7 +1695,9 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                       >
                         {isUpdating ? "Processing..." : "Mark as Done"}
                       </button>
-                    )}
+                    )} */}
+
+                    
                   </div>
                 </div>
               </div>
