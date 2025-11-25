@@ -84,6 +84,7 @@ const Scrap: React.FC = () => {
       Extract_from: newScrap.Extract_from || "",
       Category: newScrap.Category || "",
       qty: newScrap.qty || 0,
+      uom: newScrap.uom || "",
       description: newScrap.description || "",
       createdAt: newScrap.createdAt || new Date().toISOString(),
       updatedAt: newScrap.updatedAt || new Date().toISOString(),
@@ -103,6 +104,7 @@ const Scrap: React.FC = () => {
       Extract_from: updatedScrap.Extract_from || "",
       Category: updatedScrap.Category || "",
       qty: updatedScrap.qty || 0,
+      uom: updatedScrap.uom || "",
       description: updatedScrap.description || "",
       createdAt: updatedScrap.createdAt || new Date().toISOString(),
       updatedAt: updatedScrap.updatedAt || new Date().toISOString(),
@@ -204,6 +206,7 @@ const Scrap: React.FC = () => {
         scrap.Extract_from?.toLowerCase()?.includes(searchTxt) ||
         scrap.Category?.toLowerCase()?.includes(searchTxt) ||
         scrap.qty?.toString().toLowerCase().includes(searchTxt) ||
+        scrap.uom?.toLowerCase()?.includes(searchTxt) ||
         scrap.description?.toLowerCase()?.includes(searchTxt) ||
         (scrap?.createdAt &&
           new Date(scrap?.createdAt)

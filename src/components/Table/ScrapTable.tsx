@@ -34,6 +34,7 @@ interface ScrapTableProps {
     Extract_from: string;
     Category: string;
     qty: number;
+    uom: string;
     description: string;
     createdAt: string;
     updatedAt: string;
@@ -66,6 +67,7 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
       { Header: "Category", accessor: "Category" },
       { Header: "Extract From", accessor: "Extract_from" },
       { Header: "Quantity", accessor: "qty" },
+      { Header: "UOM", accessor: "uom" },
       { Header: "Price", accessor: "price" },
       { Header: "Description", accessor: "description" },
       { Header: "Created On", accessor: "createdAt" },
@@ -264,6 +266,8 @@ const ScrapTable: React.FC<ScrapTableProps> = ({
                         displayValue = original.Extract_from || "N/A";
                       } else if (colId === "qty") {
                         displayValue = original.qty || "0";
+                      } else if (colId === "uom") {
+                        displayValue = original.uom || "N/A";
                       } else if (colId === "price") {
                         displayValue = original.price
                           ? `₹${original.price}`

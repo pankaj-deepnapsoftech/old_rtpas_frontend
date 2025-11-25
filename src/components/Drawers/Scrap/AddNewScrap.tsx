@@ -59,10 +59,41 @@ const AddNewScrap = ({
   const [localEditScrap] = useState(editScrap);
   const [directOrIndirect, setDirectOrIndirect] = useState();
   const [categories, setCategories] = useState([]);
+  const [selectedUOM, setSelectedUOM] = useState();
 
   const directOrIndirectOption = [
     { value: "direct", label: "Direct" },
     { value: "indirect", label: "Indirect" },
+  ];
+
+  const uomOptions = [
+    { value: "pcs", label: "pcs" },
+    { value: "kgs", label: "kgs" },
+    { value: "g", label: "g" },
+    { value: "mg", label: "mg" },
+    { value: "ltr", label: "ltr" },
+    { value: "ml", label: "ml" },
+    { value: "tonne", label: "tonne" },
+    { value: "cm", label: "cm" },
+    { value: "mm", label: "mm" },
+    { value: "inch", label: "inch" },
+    { value: "ft", label: "ft" },
+    { value: "mtr", label: "mtr" },
+    { value: "sqft", label: "sqft" },
+    { value: "sqm", label: "sqm" },
+    { value: "cbm", label: "cbm" },
+    { value: "cft", label: "cft" },
+    { value: "dozen", label: "dozen" },
+    { value: "pack", label: "pack" },
+    { value: "set", label: "set" },
+    { value: "roll", label: "roll" },
+    { value: "box", label: "box" },
+    { value: "bag", label: "bag" },
+    { value: "pair", label: "pair" },
+    { value: "sheet", label: "sheet" },
+    { value: "tube", label: "tube" },
+    { value: "bottle", label: "bottle" },
+    { value: "container", label: "container" },
   ];
 
   const formik = useFormik({
@@ -74,6 +105,7 @@ const AddNewScrap = ({
       Category: "",
       qty: "",
       description: "",
+      uom: "",
     },
     enableReinitialize: true,
     onSubmit: async (values, { resetForm }) => {
@@ -85,6 +117,10 @@ const AddNewScrap = ({
         toast.error("Please select a valid category");
         return;
       }
+      if (!selectedUOM?.value) {
+        toast.error("Please select UOM (Unit of Measurement)");
+        return;
+      }
 
       const submitData = {
         Scrap_name: values.Scrap_name,
@@ -93,6 +129,7 @@ const AddNewScrap = ({
         Category: values.Category,
         qty: parseFloat(values.qty) || 0,
         description: values.description,
+        uom: selectedUOM.value,
       };
 
       try {
@@ -181,6 +218,12 @@ const AddNewScrap = ({
         );
         if (extractOption) {
           setDirectOrIndirect(extractOption);
+        }
+      }
+      if (editScrap.uom) {
+        const uomOption = uomOptions.find((opt) => opt.value === editScrap.uom);
+        if (uomOption) {
+          setSelectedUOM(uomOption);
         }
       }
     }
@@ -323,6 +366,20 @@ const AddNewScrap = ({
                 boxShadow: "0 0 0 1px #3182ce",
               }}
               _placeholder={{ color: "gray.500" }}
+            />
+          </FormControl>
+
+          <FormControl className="mt-3 mb-5" isRequired>
+            <FormLabel fontWeight="bold" color="gray.700">
+              Unit of Measurement (UOM)
+            </FormLabel>
+            <Select
+              className="rounded mt-2 border"
+              placeholder="Select UOM"
+              value={selectedUOM}
+              options={uomOptions}
+              onChange={(e: any) => setSelectedUOM(e)}
+              styles={customStyles}
             />
           </FormControl>
 
