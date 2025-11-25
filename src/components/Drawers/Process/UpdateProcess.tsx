@@ -126,6 +126,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       total_part_cost: "",
     },
   ]);
+  const [scrapCatalog, setScrapCatalog] = useState<any[] | []>([]);
+  const [scrapOptions, setScrapOptions] = useState<{ value: string; label: string }[]>([]);
 
   const [updateProcess] = useUpdateProcessMutation();
 
@@ -694,17 +696,19 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       const modifiedRawMaterials =
         data.production_process.bom.raw_materials.map((material: any) => {
           const prod = data.production_process.raw_materials.find(
-            (p: any) => p.item._id === material.item._id
+            (p: any) => (p?.item?._id || p?.item) === (material?.item?._id || material?.item)
           );
 
           return {
-            _id: material._id,
-            item: material.item._id,
-            item_name: { value: material.item._id, label: material.item.name },
-            description: material.description,
-            quantity: material.quantity,
-            uom: material.item.uom,
-            category: material.item.category,
+            _id: material?._id,
+            item: material?.item?._id || material?.item || "",
+            item_name: material?.item
+              ? { value: material.item._id, label: material.item.name }
+              : null,
+            description: material?.description || "",
+            quantity: material?.quantity || "",
+            uom: material?.item?.uom || "",
+            category: material?.item?.category || "",
             assembly_phase: {
               value: material?.assembly_phase,
               label: material?.assembly_phase,
@@ -714,33 +718,53 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
               label: material?.supplier?.name,
             },
             supporting_doc: "",
-            uom_used_quantity: material.uom_used_quantity,
-            comments: material?.comments,
-            unit_cost: material.item.price,
-            total_part_cost: material.total_part_cost,
-            estimated_quantity: prod.estimated_quantity,
-            used_quantity: prod.used_quantity,
-            remaining_quantity: prod.remaining_quantity,
+            uom_used_quantity: material?.uom_used_quantity || "",
+            comments: material?.comments || "",
+            unit_cost: material?.item?.price || "",
+            total_part_cost: material?.total_part_cost || "",
+            estimated_quantity: prod?.estimated_quantity || 0,
+            used_quantity: prod?.used_quantity || 0,
+            remaining_quantity: prod?.remaining_quantity || 0,
           };
         });
 
       const scrap: any = [];
       data.production_process?.bom?.scrap_materials?.forEach(
         (material: any) => {
-          const sc = data.production_process.scrap_materials.find(
-            (p: any) => p.item === material.item._id
+          const itemObj = material && material.item ? material.item : null;
+          const itemId = itemObj && itemObj._id
+            ? itemObj._id
+            : typeof material?.item === "string"
+            ? material.item
+            : undefined;
+
+          const sc = (data.production_process.scrap_materials || []).find(
+            (p: any) => String(p?.item || "") === String(itemId || "")
+          ) || {};
+
+          const scFromCatalog = (scrapCatalog || []).find(
+            (s: any) => String(s?._id || "") === String(itemId || "")
           );
 
+          const itemSelect = itemObj && itemObj._id && itemObj.name
+            ? { value: itemObj._id, label: itemObj.name }
+            : scFromCatalog && scFromCatalog._id && scFromCatalog.Scrap_name
+            ? { value: scFromCatalog._id, label: scFromCatalog.Scrap_name }
+            : material?.scrap_name
+            ? { value: material?.scrap_id || "", label: material.scrap_name }
+            : null;
+
           scrap.push({
-            _id: material._id,
-            item_name: { value: material.item._id, label: material.item.name },
-            description: material.description,
-            estimated_quantity: sc.estimated_quantity,
-            produced_quantity: sc.produced_quantity,
-            uom: material.item.uom,
-            unit_cost: material.item.price,
-            total_part_cost: material.total_part_cost,
-            uom_produced_quantity: material.uom_used_quantity,
+            _id: material?._id || "",
+            item: itemId,
+            item_name: itemSelect,
+            description: material?.description || "",
+            estimated_quantity: sc?.estimated_quantity || material?.quantity || 0,
+            produced_quantity: sc?.produced_quantity || 0,
+            uom: itemObj?.uom || scFromCatalog?.uom || material?.uom || "",
+            unit_cost: itemObj?.price || scFromCatalog?.price || material?.unit_cost || "",
+            total_part_cost: material?.total_part_cost || "",
+            uom_produced_quantity: material?.uom_used_quantity || "",
           });
         }
       );
@@ -778,20 +802,20 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       setProcessStatuses(initialStatuses);
 
       setFinishedGood({
-        value: data.production_process.bom.finished_good.item._id,
-        label: data.production_process.bom.finished_good.item.name,
+        value: data.production_process.bom.finished_good?.item?._id || "",
+        label: data.production_process.bom.finished_good?.item?.name || "",
       });
       setFinishedGoodDescription(
         data.production_process.bom.finished_good?.description
       );
       setFinishedGoodQuantity(fetchedEstimated);
-      setFinishedGoodUom(data.production_process.bom.finished_good.item.uom);
+      setFinishedGoodUom(data.production_process.bom.finished_good?.item?.uom || "");
       setFinishedGoodUnitCost(
-        data.production_process.bom.finished_good.item.price
+        data.production_process.bom.finished_good?.item?.price || 0
       );
       setFinishedGoodCost(data.production_process.bom.finished_good.cost);
       setFinishedGoodCategory(
-        data.production_process.bom.finished_good.item.category
+        data.production_process.bom.finished_good?.item?.category || ""
       );
       setFinishedGoodComments(
         data.production_process.bom.finished_good.comments
@@ -841,8 +865,28 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     }
   };
 
+  const fetchScrapCatalog = async () => {
+    try {
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `scrap/get?limit=${500}&page=${1}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      const scrapData = Array.isArray(data?.data) ? data.data : [];
+      setScrapCatalog(scrapData);
+    } catch (error: any) {
+      toast.error(error?.message || "Something went wrong");
+    }
+  };
+
   useEffect(() => {
     fetchProcessDetailsHandler(id || "");
+    fetchScrapCatalog();
   }, [id]);
 
   useEffect(() => {
@@ -852,6 +896,35 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     }));
     setProductOptions(options);
   }, [products]);
+
+  useEffect(() => {
+    const options = (scrapCatalog || []).map((sc: any) => ({
+      value: sc._id,
+      label: sc.Scrap_name,
+    }));
+    setScrapOptions(options);
+  }, [scrapCatalog]);
+
+  useEffect(() => {
+    if (!scrapCatalog.length || !scrapMaterials.length) return;
+    setScrapMaterials((prev) =>
+      prev.map((m: any) => {
+        if (m.item_name) return m;
+        const itemId = typeof m.item === "string" ? m.item : undefined;
+        const sc = (scrapCatalog || []).find(
+          (s: any) => String(s?._id || "") === String(itemId || "")
+        );
+        return sc && sc._id
+          ? {
+              ...m,
+              item_name: { value: sc._id, label: sc.Scrap_name },
+              uom: m.uom || sc.uom || "",
+              unit_cost: m.unit_cost || sc.price || "",
+            }
+          : m;
+      })
+    );
+  }, [scrapCatalog]);
 
   useEffect(() => {
     if (
@@ -1216,7 +1289,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           <Select
                             styles={customStyles}
                             className="text-sm"
-                            options={productOptions}
+                            options={scrapOptions}
                             placeholder="Select"
                             value={material.item_name}
                             isDisabled

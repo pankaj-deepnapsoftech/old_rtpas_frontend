@@ -1615,22 +1615,34 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                         {sm.item?.name || "N/A"}
                       </td>
                       <td className="p-3 text-gray-800">
-                        {selectedProcess?.scrap_materials[0]
-                          .estimated_quantity || 0}
+                        {(() => {
+                          const sc = (selectedProcess?.scrap_materials || []).find(
+                            (s: any) => String(s?.item || "") === String(sm?.item?._id || sm?.item || "")
+                          );
+                          return (sc?.estimated_quantity ?? sm?.quantity ?? 0);
+                        })()}
                       </td>
                       <td className="p-3 text-gray-800">
-                        {selectedProcess?.scrap_materials[0]
-                          .produced_quantity || 0}
+                        {(() => {
+                          const sc = (selectedProcess?.scrap_materials || []).find(
+                            (s: any) => String(s?.item || "") === String(sm?.item?._id || sm?.item || "")
+                          );
+                          return (sc?.produced_quantity ?? 0);
+                        })()}
                       </td>
                       <td className="p-3 text-gray-800">
                         ₹{sm.item?.price || 0}
                       </td>
                       <td className="p-3 text-gray-800">
                         ₹
-                        {(
-                          (selectedProcess?.scrap_materials[0]
-                            .estimated_quantity || 0) * (sm?.item?.price || 0)
-                        ).toFixed(2)}
+                        {(() => {
+                          const sc = (selectedProcess?.scrap_materials || []).find(
+                            (s: any) => String(s?.item || "") === String(sm?.item?._id || sm?.item || "")
+                          );
+                          const est = sc?.estimated_quantity ?? sm?.quantity ?? 0;
+                          const price = sm?.item?.price || 0;
+                          return (Number(est) * Number(price)).toFixed(2);
+                        })()}
                       </td>
                     </tr>
                   ))}

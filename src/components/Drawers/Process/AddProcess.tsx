@@ -73,14 +73,38 @@ const AddProcess: React.FC<AddProcess> = ({
 
   const addProcessHandler = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!itemName?.value) {
+      toast.error("Please select Finished Good item");
+      return;
+    }
+    if (!bom?.value) {
+      toast.error("Please select BOM");
+      return;
+    }
+    if (!quantity || Number(quantity) <= 0) {
+      toast.error("Please enter a valid quantity");
+      return;
+    }
+    if (!rmStore?.value) {
+      toast.error("Please select RM store");
+      return;
+    }
+    if (!fgStore?.value) {
+      toast.error("Please select FG store");
+      return;
+    }
+    if (!scrapStore?.value) {
+      toast.error("Please select Scrap store");
+      return;
+    }
 
     const data = {
-      item: itemName?.value,
-      bom: bom?.value,
-      quantity: quantity,
-      rm_store: rmStore?.value,
-      fg_store: fgStore?.value,
-      scrap_store: scrapStore?.value,
+      item: itemName.value,
+      bom: bom.value,
+      quantity: Number(quantity),
+      rm_store: rmStore.value,
+      fg_store: fgStore.value,
+      scrap_store: scrapStore.value,
     };
 
     try {
@@ -93,7 +117,8 @@ const AddProcess: React.FC<AddProcess> = ({
       closeDrawerHandler();
       fetchProcessHandler();
     } catch (error: any) {
-      toast.error(error?.message || "Something went wrong");
+      const msg = error?.data?.message || error?.message || "Something went wrong";
+      toast.error(msg);
     } finally {
       setIsAdding(false);
     }

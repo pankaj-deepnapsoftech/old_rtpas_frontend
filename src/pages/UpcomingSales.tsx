@@ -73,7 +73,7 @@ const UpcomingSales: React.FC = () => {
         (sale.createdAt &&
           new Date(sale.createdAt)
             ?.toISOString()
-            ?.substring(0, 10)
+            ?.substring(0, 10)  
             ?.split("-")
             ?.reverse()
             ?.join("")
@@ -156,7 +156,7 @@ const UpcomingSales: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto"> 
           <table className="min-w-full">
             <thead style={{ backgroundColor: colors.table.header }}>
               <tr>

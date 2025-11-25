@@ -29,6 +29,8 @@ const BomDetails: React.FC<BomDetailsProps> = ({
   const [remarks, setRemarks] = useState<any[] | []>([]);
   const [resources, setResources] = useState<any[] | []>([]);
   const [manpower, setManpower] = useState<any[] | []>([]);
+  const [scrapCatalog, setScrapCatalog] = useState<any[] | []>([]);
+  const [isLoadingScrapCatalog, setIsLoadingScrapCatalog] = useState<boolean>(false);
   const fetchBomDetails = async () => {
     if (!bomId) return;
     try {
@@ -63,8 +65,31 @@ const BomDetails: React.FC<BomDetailsProps> = ({
     }
   };
 
+  const fetchScrapCatalog = async () => {
+    try {
+      setIsLoadingScrapCatalog(true);
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `scrap/get?limit=${500}&page=${1}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      const scrapData = Array.isArray(data?.data) ? data.data : [];
+      setScrapCatalog(scrapData);
+    } catch (error: any) {
+      toast.error(error?.message || "Something went wrong");
+    } finally {
+      setIsLoadingScrapCatalog(false);
+    }
+  };
+
   useEffect(() => {
     fetchBomDetails();
+    fetchScrapCatalog();
     // if bomId can change, add it to deps: [bomId]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -306,13 +331,13 @@ const BomDetails: React.FC<BomDetailsProps> = ({
                       <span className="font-semibold text-gray-600">
                         Item ID:
                       </span>{" "}
-                      {material?.item?.product_id}
+                      {material?.item?.product_id ?? material?.scrap_id ?? (scrapCatalog.find((s: any) => s._id === (material?.item?._id || material?.item))?.Scrap_id || "N/A")}
                     </p>
                     <p>
                       <span className="font-semibold text-gray-600">
                         Item Name:
                       </span>{" "}
-                      {material?.item?.name}
+                      {material?.item?.name ?? material?.scrap_name ?? (scrapCatalog.find((s: any) => s._id === (material?.item?._id || material?.item))?.Scrap_name || "N/A")}
                     </p>
                     {material?.item?.color ? (
                       <p>
@@ -338,7 +363,7 @@ const BomDetails: React.FC<BomDetailsProps> = ({
                     </p>
                     <p>
                       <span className="font-semibold text-gray-600">UOM:</span>{" "}
-                      {material?.item?.uom}
+                      {material?.item?.uom ?? material?.uom ?? (scrapCatalog.find((s: any) => s._id === (material?.item?._id || material?.item))?.uom || "N/A")}
                     </p>
                     <p>
                       <span className="font-semibold text-gray-600">
@@ -355,6 +380,59 @@ const BomDetails: React.FC<BomDetailsProps> = ({
               </ul>
             </div>
           )}
+
+          <div className="bg-white p-6 shadow-lg rounded-lg border">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-md font-semibold text-gray-900">Scrap Management Data</h4>
+              <button
+                type="button"
+                onClick={fetchScrapCatalog}
+                className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm rounded"
+              >
+                Refresh
+              </button>
+            </div>
+            <div className="overflow-x-auto border rounded">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-100 text-xs text-gray-700">
+                    <th className="px-3 py-2 text-left">Scrap ID</th>
+                    <th className="px-3 py-2 text-left">Name</th>
+                    <th className="px-3 py-2 text-left">Category</th>
+                    <th className="px-3 py-2 text-left">Extract From</th>
+                    <th className="px-3 py-2 text-left">Qty</th>
+                    <th className="px-3 py-2 text-left">UOM</th>
+                    <th className="px-3 py-2 text-left">Unit Price</th>
+                    <th className="px-3 py-2 text-left">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoadingScrapCatalog ? (
+                    <tr>
+                      <td className="px-3 py-3" colSpan={8}>Loading...</td>
+                    </tr>
+                  ) : scrapCatalog.length === 0 ? (
+                    <tr>
+                      <td className="px-3 py-3" colSpan={8}>No scrap records</td>
+                    </tr>
+                  ) : (
+                    scrapCatalog.map((sc: any, idx: number) => (
+                      <tr key={sc._id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                        <td className="px-3 py-2 text-gray-800">{sc.Scrap_id || "N/A"}</td>
+                        <td className="px-3 py-2 text-gray-800">{sc.Scrap_name || "N/A"}</td>
+                        <td className="px-3 py-2 text-gray-800">{sc.Category || "N/A"}</td>
+                        <td className="px-3 py-2 text-gray-800">{sc.Extract_from || "N/A"}</td>
+                        <td className="px-3 py-2 text-gray-800">{sc.qty ?? 0}</td>
+                        <td className="px-3 py-2 text-gray-800">{sc.uom || "N/A"}</td>
+                        <td className="px-3 py-2 text-gray-800">₹{sc.price ?? 0}</td>
+                        <td className="px-3 py-2 text-gray-800">{sc.description || ""}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           {/* Other Charges */}
           {otherCharges && (

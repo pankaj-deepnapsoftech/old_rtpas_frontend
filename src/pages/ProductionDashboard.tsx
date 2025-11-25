@@ -206,6 +206,10 @@ interface BomDetailData {
     quantity: number;
     total_part_cost: number;
     uom_used_quantity: string;
+    uom?: string;
+    unit_cost?: number;
+    scrap_id?: string;
+    scrap_name?: string;
     is_production_started: boolean;
     createdAt: string;
     updatedAt: string;
@@ -520,6 +524,27 @@ const ProductionDashboard: React.FC = () => {
   const [productionProcessDeleteLoading, setProductionProcessDeleteLoading] = useState(false);
   const [pausingProcessId, setPausingProcessId] = useState<string | null>(null);
   const [pauseLoading, setPauseLoading] = useState(false);
+  const [scrapCatalog, setScrapCatalog] = useState<any[]>([]);
+  const [scrapLoading, setScrapLoading] = useState(false);
+
+  const fetchScrapCatalog = async () => {
+    try {
+      setScrapLoading(true);
+      const cookies = parseCookies();
+      const token = cookies?.access_token;
+      if (!token) return;
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8096/api/';
+      const response = await fetch(`${backendUrl}scrap/get?limit=${500}&page=${1}`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (Array.isArray(data?.data)) setScrapCatalog(data.data);
+    } catch (_) {
+    } finally {
+      setScrapLoading(false);
+    }
+  };
 
   // Fetch production dashboard data
   useEffect(() => {
@@ -1198,6 +1223,10 @@ const ProductionDashboard: React.FC = () => {
     };
   }, [isDropdownOpen]);
 
+  useEffect(() => {
+    fetchScrapCatalog();
+  }, []);
+
   // Open delete confirmation for a BOM id
   const confirmDeleteBom = (bomId: string) => {
     setDeletingBomId(bomId);
@@ -1821,7 +1850,7 @@ const ProductionDashboard: React.FC = () => {
       </div>
 
       {/* BOM Detail Modal */}
-      {showBomDetailModal && bomDetailData && (
+  {showBomDetailModal && bomDetailData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -1940,7 +1969,7 @@ const ProductionDashboard: React.FC = () => {
                           <thead className="bg-gray-100">
                             <tr>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item Name</th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product ID</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item ID</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">UOM</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Cost</th>
@@ -1949,10 +1978,10 @@ const ProductionDashboard: React.FC = () => {
                           <tbody className="bg-white divide-y divide-gray-200">
                             {bomDetailData.scrap_materials.map((material, idx) => (
                               <tr key={material._id}>
-                                <td className="px-4 py-2 text-sm text-gray-900">{material.item.name}</td>
-                                <td className="px-4 py-2 text-sm text-gray-900">{material.item.product_id}</td>
+                                <td className="px-4 py-2 text-sm text-gray-900">{material.item?.name || material.scrap_name || (scrapCatalog.find((s:any) => s._id === (material.item?._id || material.item))?.Scrap_name) || "N/A"}</td>
+                                <td className="px-4 py-2 text-sm text-gray-900">{material.item?.product_id || material.scrap_id || (scrapCatalog.find((s:any) => s._id === (material.item?._id || material.item))?.Scrap_id) || "N/A"}</td>
                                 <td className="px-4 py-2 text-sm text-gray-900">{material.quantity}</td>
-                                <td className="px-4 py-2 text-sm text-gray-900">{material.item.uom}</td>
+                                <td className="px-4 py-2 text-sm text-gray-900">{material.item?.uom || material.uom || (scrapCatalog.find((s:any) => s._id === (material.item?._id || material.item))?.uom) || "N/A"}</td>
                                 <td className="px-4 py-2 text-sm text-gray-900">₹{material.total_part_cost}</td>
                               </tr>
                             ))}

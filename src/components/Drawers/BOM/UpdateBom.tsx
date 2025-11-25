@@ -114,6 +114,9 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     },
   ]);
 
+  const [scrapCatalog, setScrapCatalog] = useState<any[] | []>([]);
+  const [isLoadingScrapCatalog, setIsLoadingScrapCatalog] = useState<boolean>(false);
+
   // ---------- Helpers ----------
 
   const addRawMaterial = () => {
@@ -233,15 +236,15 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       setPartsCount(data.bom.parts_count);
       setTotalPartsCost(data.bom.total_cost);
       setFinishedGood({
-        value: data.bom.finished_good.item._id,
-        label: data.bom.finished_good.item.name,
+        value: data.bom.finished_good?.item?._id || "",
+        label: data.bom.finished_good?.item?.name || "",
       });
       setDescription(data.bom.finished_good.description);
       setQuantity(data.bom.finished_good.quantity);
       setCost(data.bom.finished_good.cost);
-      setUnitCost(data.bom.finished_good.item.price);
-      setUom(data.bom.finished_good.item.uom);
-      setCategory(data.bom.finished_good.item.category);
+      setUnitCost(data.bom.finished_good?.item?.price || 0);
+      setUom(data.bom.finished_good?.item?.uom || "");
+      setCategory(data.bom.finished_good?.item?.category || "");
       setComments(data.bom.finished_good.comments);
       setRemarks(data?.bom?.remarks)
       setProcesses(data.bom.processes || [""]);
@@ -263,39 +266,55 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
 
       const inputs: any = [];
       data.bom.raw_materials.forEach((material: any) => {
+        const itemObj = material?.item || null;
         inputs.push({
-          _id: material._id,
-          item_name: { value: material.item._id, label: material.item.name },
-          description: material.description,
-          quantity: material.quantity,
-          uom: material.item.uom,
-          category: material.item.category,
+          _id: material?._id,
+          item_name: itemObj
+            ? { value: itemObj._id, label: itemObj.name }
+            : null,
+          description: material?.description || "",
+          quantity: material?.quantity || "",
+          uom: itemObj?.uom || "",
+          category: itemObj?.category || "",
           assembly_phase: {
-            value: material?.assembly_phase,
-            label: material?.assembly_phase,
+            value: material?.assembly_phase || "",
+            label: material?.assembly_phase || "",
           },
           supplier: {
-            value: material?.supplier?._id,
-            label: material?.supplier?.name,
+            value: material?.supplier?._id || "",
+            label: material?.supplier?.name || "",
           },
           supporting_doc: "",
-          comments: material?.comments,
-          unit_cost: material.item.price,
-          total_part_cost: material.total_part_cost,
+          comments: material?.comments || "",
+          unit_cost: itemObj?.price || "",
+          total_part_cost: material?.total_part_cost || "",
         });
       });
       setRawMaterials(inputs);
 
       const scrap: any = [];
       data.bom?.scrap_materials?.forEach((material: any) => {
+        const itemObj = material?.item || null;
+        const scFromCatalog = scrapCatalog.find(
+          (s: any) => s._id === (itemObj?._id || material?.item || material?.scrap_id)
+        );
+        const itemSelect = itemObj
+          ? { value: itemObj._id, label: itemObj.name }
+          : material?.scrap_id && material?.scrap_name
+          ? { value: material.scrap_id, label: material.scrap_name }
+          : scFromCatalog
+          ? { value: scFromCatalog._id, label: scFromCatalog.Scrap_name }
+          : null;
+
         scrap.push({
-          _id: material._id,
-          item_name: { value: material.item._id, label: material.item.name },
-          description: material.description,
-          quantity: material.quantity,
-          uom: material.item.uom,
-          unit_cost: material.item.price,
-          total_part_cost: material.total_part_cost,
+          _id: material?._id,
+          item: itemObj?._id || material?.item || material?.scrap_id || undefined,
+          item_name: itemSelect,
+          description: material?.description || "",
+          quantity: material?.quantity || "",
+          uom: material?.uom || itemObj?.uom || scFromCatalog?.uom || "",
+          unit_cost: material?.unit_cost || itemObj?.price || scFromCatalog?.price || "",
+          total_part_cost: material?.total_part_cost || "",
         });
       });
       setScrapMaterials(scrap);
@@ -328,6 +347,28 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       toast.error(error?.message || "Something went wrong");
     } finally {
       setIsLoadingProducts(false);
+    }
+  };
+
+  const fetchScrapCatalog = async () => {
+    try {
+      setIsLoadingScrapCatalog(true);
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + `scrap/get?limit=${500}&page=${1}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      const scrapData = Array.isArray(data?.data) ? data.data : [];
+      setScrapCatalog(scrapData);
+    } catch (error: any) {
+      toast.error(error?.message || "Something went wrong");
+    } finally {
+      setIsLoadingScrapCatalog(false);
     }
   };
 
@@ -387,6 +428,9 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
           uom: material?.uom,
           unit_cost: material?.unit_cost,
           total_part_cost: material?.total_part_cost,
+          scrap_id: material?.item || undefined,
+          scrap_name:
+            (typeof material?.item_name === "object" && material?.item_name?.label) || undefined,
         };
         if (material?._id && material._id.trim() !== "") {
           materialData._id = material._id;
@@ -498,6 +542,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     fetchProductsHandler();
     fetchResourceHandler();
     fetchEmployeeHandler();
+    fetchScrapCatalog();
   }, [bomId]);
 
   useEffect(() => {
@@ -514,16 +559,34 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         value: prd._id,
         label: prd.name,
       }));
-    const scarpMaterialsOptions = products
-      .filter((prd) => prd.category === "raw materials")
-      .map((prd) => ({
-        value: prd._id,
-        label: prd.name,
-      }));
-    setscarpMaterials(scarpMaterialsOptions)
+    const scarpMaterialsOptions = (scrapCatalog || []).map((sc: any) => ({
+      value: sc._id,
+      label: sc.Scrap_name,
+    }));
+    setscarpMaterials(scarpMaterialsOptions);
     setFinishedGoodsOptions(finishedGoodsOptions);
     setRawMaterialsOptions(rawMaterialsOptions);
-  }, [products]);
+  }, [products, scrapCatalog]);
+
+  useEffect(() => {
+    if (!scrapCatalog.length || !scrapMaterials.length) return;
+    setScrapMaterials((prev) =>
+      prev.map((m: any) => {
+        if (m.item_name) return m;
+        const sc = scrapCatalog.find(
+          (s: any) => s._id === (m.item || undefined)
+        );
+        return sc
+          ? {
+              ...m,
+              item_name: { value: sc._id, label: sc.Scrap_name },
+              uom: m.uom || sc.uom || "",
+              unit_cost: m.unit_cost || sc.price || "",
+            }
+          : m;
+      })
+    );
+  }, [scrapCatalog]);
 
   useEffect(() => {
     if (
@@ -1245,19 +1308,23 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             className="text-sm"
                             options={scarpMaterials}
                             placeholder="Select"
-                            value={material.item_name}
+                            value={
+                              material.item_name ||
+                              scarpMaterials.find((o: any) => o.value === material.item) ||
+                              null
+                            }
                             onChange={(d: any) => {
                               const newMaterials = [...scrapMaterials];
                               newMaterials[index].item_name = d;
-                              const product = products.find(
-                                (p) => p._id === d?.value
+                              const sc = scrapCatalog.find(
+                                (s: any) => s._id === d?.value
                               );
-                              if (product) {
-                                newMaterials[index].unit_cost = product.price;
-                                newMaterials[index].uom = product.uom;
+                              if (sc) {
+                                newMaterials[index].unit_cost = sc.price;
+                                newMaterials[index].uom = sc.uom;
                                 if (material.quantity) {
                                   newMaterials[index].total_part_cost =
-                                    product.price * +material.quantity;
+                                    Number(sc.price) * Number(material.quantity);
                                 }
                               }
                               setScrapMaterials(newMaterials);
@@ -1375,6 +1442,61 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border-b">
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-md font-semibold text-gray-900">Scrap Management Data</h4>
+                    <button
+                      type="button"
+                      onClick={fetchScrapCatalog}
+                      className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm rounded"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto border rounded">
+                    <table className="min-w-full"> 
+                      <thead>
+                        <tr className="bg-gray-100 text-xs text-gray-700">
+                          <th className="px-3 py-2 text-left">Scrap ID</th>
+                          <th className="px-3 py-2 text-left">Name</th>
+                          <th className="px-3 py-2 text-left">Category</th>
+                          <th className="px-3 py-2 text-left">Extract From</th>
+                          <th className="px-3 py-2 text-left">Qty</th>
+                          <th className="px-3 py-2 text-left">UOM</th>
+                          <th className="px-3 py-2 text-left">Unit Price</th>
+                          <th className="px-3 py-2 text-left">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {isLoadingScrapCatalog ? (
+                          <tr>
+                            <td className="px-3 py-3" colSpan={8}>Loading...</td>
+                          </tr>
+                        ) : scrapCatalog.length === 0 ? (
+                          <tr>
+                            <td className="px-3 py-3" colSpan={8}>No scrap records</td>
+                          </tr>
+                        ) : (
+                          scrapCatalog.map((sc: any, idx: number) => (
+                            <tr key={sc._id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                              <td className="px-3 py-2 text-gray-800">{sc.Scrap_id || "N/A"}</td>
+                              <td className="px-3 py-2 text-gray-800">{sc.Scrap_name || "N/A"}</td>
+                              <td className="px-3 py-2 text-gray-800">{sc.Category || "N/A"}</td>
+                              <td className="px-3 py-2 text-gray-800">{sc.Extract_from || "N/A"}</td>
+                              <td className="px-3 py-2 text-gray-800">{sc.qty ?? 0}</td>
+                              <td className="px-3 py-2 text-gray-800">{sc.uom || "N/A"}</td>
+                              <td className="px-3 py-2 text-gray-800">₹{sc.price ?? 0}</td>
+                              <td className="px-3 py-2 text-gray-800">{sc.description || ""}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
