@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { useCookies } from "react-cookie";
 import { colors } from "../../../theme/colors";
 import { Plus, Trash2 } from "lucide-react";
+import axios from "axios";
 
 interface UpdateBomProps {
   closeDrawerHandler: () => void;
@@ -36,13 +37,30 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   const supportingDoc = useRef<HTMLInputElement | null>(null);
   const [comments, setComments] = useState<string | undefined>();
   const [cost, setCost] = useState<number | undefined>();
-  const [finishedGoodsOptions, setFinishedGoodsOptions] = useState<{ value: string; label: string }[]>([]);
-  const [rawMaterialsOptions, setRawMaterialsOptions] = useState<{ value: string; label: string }[]>([]);
+  const [finishedGoodsOptions, setFinishedGoodsOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [rawMaterialsOptions, setRawMaterialsOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [processes, setProcesses] = useState<string[]>([""]);
 
   const [products, setProducts] = useState<any[]>([]);
   const [remarks, setRemarks] = useState<string>("");
   const [scarpMaterials, setscarpMaterials] = useState<any[]>([]);
+  const [scrapData, setScrapData] = useState<any[]>([]);
+  const [scrapMaterialsOptions, setScrapMaterialsOptions] = useState<
+    {
+      value: string;
+      label: string;
+      price: number;
+      uom: string;
+      quantity?: number;
+      category?: string;
+      extractFrom?: string;
+      description?: string;
+    }[]
+  >([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(false);
   const [updateBom] = useUpdateBOMMutation();
 
@@ -56,7 +74,9 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   const [otherCharges, setOtherCharges] = useState<number | undefined>();
   // Resources & Manpower states
   const [resources, setResources] = useState<any[]>([]);
-  const [resourceOptions, setResourceOptions] = useState<{ value: string; label: string }[]>([]);
+  const [resourceOptions, setResourceOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
   type OptionType = {
     value: string;
     label: string;
@@ -65,23 +85,31 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     customId?: string;
   };
 
-  type ResourceRow = { name: OptionType | null; type: OptionType | null; specification: string; comment: string, customId: string; };
-
+  type ResourceRow = {
+    name: OptionType | null;
+    type: OptionType | null;
+    specification: string;
+    comment: string;
+    customId: string;
+  };
 
   const [selectedResources, setSelectedResources] = useState<ResourceRow[]>([
     { name: null, type: null, specification: "", comment: "", customId: "" },
   ]);
 
-
   // Manpower rows state
   const [selectedManpower, setSelectedManpower] = useState<
-    { employee: { value: string; label: string } | null; role: string; hours: string }[]
-  >([
-    { employee: null, role: "", hours: "" }
-  ]);
+    {
+      employee: { value: string; label: string } | null;
+      role: string;
+      hours: string;
+    }[]
+  >([{ employee: null, role: "", hours: "" }]);
 
   const [empData, setEmpData] = useState<any[]>([]);
-  const [manPowerOptions, setManPowerOptions] = useState<{ value: string; label: string }[]>([]);
+  const [manPowerOptions, setManPowerOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [manpowerInput, setManpowerInput] = useState<string>("");
   const [manpowerCount, setManpowerCount] = useState<number>(0);
 
@@ -246,18 +274,28 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       setUom(data.bom.finished_good?.item?.uom || "");
       setCategory(data.bom.finished_good?.item?.category || "");
       setComments(data.bom.finished_good.comments);
-      setRemarks(data?.bom?.remarks)
+      setRemarks(data?.bom?.remarks);
       setProcesses(data.bom.processes || [""]);
       setSelectedResources(
         data.bom.resources?.length
           ? data.bom.resources.map((r: any) => ({
-            name: r.resource_id ? { value: r.resource_id._id, label: r.resource_id.name } : null,
-            type: r.type ? { value: r.type, label: r.type } : null,
-            specification: r.specification || "",
-            comment: r.comment || "",
-            customId: r.resource_id?.customId || "",   // <-- add this
-          }))
-          : [{ name: null, type: null, specification: "", comment: "", customId: "" }]
+              name: r.resource_id
+                ? { value: r.resource_id._id, label: r.resource_id.name }
+                : null,
+              type: r.type ? { value: r.type, label: r.type } : null,
+              specification: r.specification || "",
+              comment: r.comment || "",
+              customId: r.resource_id?.customId || "", // <-- add this
+            }))
+          : [
+              {
+                name: null,
+                type: null,
+                specification: "",
+                comment: "",
+                customId: "",
+              },
+            ]
       );
 
       setManpowerCount(data.bom.manpower?.[0]?.number || empData?.length || 0);
@@ -438,7 +476,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         return materialData;
       });
 
-
     const body = {
       _id: bomId,
       raw_materials: modifiedRawMaterials,
@@ -473,11 +510,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         comment: r.comment || "",
         customId: r.customId,
       })),
-
-
-
-
-
     };
 
     try {
@@ -494,7 +526,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     }
   };
 
-  console.log(manpowerCount)
+  console.log(manpowerCount);
 
   // ---------- Effects ----------
   const fetchResourceHandler = async () => {
@@ -526,8 +558,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       const results = await response.json();
       if (!results.success) throw new Error(results?.message);
 
-      const manPowerUsers = results?.users?.filter(
-        (user: any) => user.role?.role?.toLowerCase().includes("man power")
+      const manPowerUsers = results?.users?.filter((user: any) =>
+        user.role?.role?.toLowerCase().includes("man power")
       );
 
       setEmpData(manPowerUsers);
@@ -535,7 +567,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       toast.error(error?.message || "Something went wrong");
     }
   };
-
 
   useEffect(() => {
     fetchBomDetails();
@@ -612,7 +643,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     setResourceOptions(options);
   }, [resources]);
 
-
   // ---------- Styles ----------
 
   const customStyles = {
@@ -663,13 +693,10 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
 
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
 
-      {/* Drawer */}
       <div className="fixed inset-y-0 right-0 z-50 w-full bg-white shadow-2xl transform transition-transform duration-300 ease-in-out">
         <div className="h-full flex flex-col">
-          {/* Header */}
           <div className="px-6 py-4 text-black flex border items-center justify-between">
             <h2 className="text-xl font-semibold">Update BOM</h2>
             <button
@@ -680,10 +707,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
             </button>
           </div>
 
-          {/* Form Content */}
           <div className="flex-1 overflow-y-auto bg-gray-50">
             <form onSubmit={updateBomHandler}>
-              {/* Basic Info */}
               <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -723,8 +748,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           cookies?.role === "admin"
                             ? totalPartsCost || ""
                             : totalPartsCost
-                              ? "*****"
-                              : ""
+                            ? "*****"
+                            : ""
                         }
                         readOnly
                         className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100"
@@ -734,14 +759,12 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                 </div>
               </div>
 
-              {/* Finished Good Section */}
               <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Finished Good
                   </h3>
 
-                  {/* Header (Desktop) */}
                   <div className="hidden sm:grid grid-cols-7 gap-1 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm font-semibold uppercase tracking-wider px-3 py-2">
                     <div>Finished Goods</div>
                     <div>Quantity</div>
@@ -752,10 +775,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     <div>Cost</div>
                   </div>
 
-                  {/* Row */}
                   <div className="border border-t-0 border-gray-300">
                     <div className="grid grid-cols-1 sm:grid-cols-7 gap-4 px-3 py-4 sm:items-center bg-white">
-                      {/* Product */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           Finished Goods
@@ -771,7 +792,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Qty */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           Quantity
@@ -788,7 +808,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* UOM */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           UOM
@@ -801,7 +820,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Category */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           Category
@@ -814,7 +832,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Comments */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           Comments
@@ -828,7 +845,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Unit Cost */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           Unit Cost
@@ -839,15 +855,14 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             cookies?.role === "admin"
                               ? unitCost || ""
                               : unitCost
-                                ? "*****"
-                                : ""
+                              ? "*****"
+                              : ""
                           }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                         />
                       </div>
 
-                      {/* Cost */}
                       <div>
                         <label className="sm:hidden text-xs font-semibold text-gray-700">
                           Cost
@@ -858,8 +873,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             cookies?.role === "admin"
                               ? cost || ""
                               : cost
-                                ? "*****"
-                                : ""
+                              ? "*****"
+                              : ""
                           }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -870,7 +885,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                 </div>
               </div>
 
-              {/* Raw Materials */}
               <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between mb-4">
@@ -879,7 +893,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     </h3>
                   </div>
 
-                  {/* Header */}
                   <div className="hidden sm:grid grid-cols-8 gap-1 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm font-semibold uppercase tracking-wider px-3 py-2">
                     <div>Product Name</div>
                     <div>Quantity</div>
@@ -891,14 +904,12 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     <div>Action</div>
                   </div>
 
-                  {/* Rows */}
                   <div className="border border-t-0 border-gray-300">
                     {rawMaterials.map((material, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-1 sm:grid-cols-8 gap-4 px-3 py-4 items-start sm:items-center bg-white border-b border-gray-200 last:border-b-0"
                       >
-                        {/* Product Name */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Product Name
@@ -929,7 +940,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Quantity */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Quantity
@@ -949,7 +959,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* UOM */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             UOM
@@ -962,7 +971,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Category */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Category
@@ -975,7 +983,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Comments */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Comments
@@ -995,7 +1002,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Unit Cost */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Unit Cost
@@ -1006,15 +1012,14 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.unit_cost || ""
                                 : material.unit_cost
-                                  ? "*****"
-                                  : ""
+                                ? "*****"
+                                : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
                         </div>
 
-                        {/* Total Part Cost */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Total Part Cost
@@ -1025,15 +1030,14 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.total_part_cost || ""
                                 : material.total_part_cost
-                                  ? "*****"
-                                  : ""
+                                ? "*****"
+                                : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
                         </div>
 
-                        {/* Action */}
                         <div className="flex sm:justify-center items-center gap-2">
                           <button
                             type="button"
@@ -1056,7 +1060,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                 </div>
               </div>
 
-              {/* Processes */}
               <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between mb-4">
@@ -1111,32 +1114,27 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                   </div>
                 </div>
               </div>
-              {/* Resources */}
               <div className="bg-white border-b px-4 py-4 sm:px-6">
-                {/* Resources Section */}
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Resources</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Resources
+                  </h3>
                 </div>
 
-                {/* Table Header */}
                 <div className="hidden sm:grid grid-cols-6 gap-1 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm font-semibold uppercase tracking-wider px-3 py-2">
                   <div>Resource ID</div>
                   <div>Name</div>
                   <div>Type</div>
                   <div>Specification</div>
                   <div>Comment</div>
-
                 </div>
 
-                {/* Rows */}
-                {/* Resource Rows */}
                 <div className="border border-t-0 border-gray-300">
                   {selectedResources.map((res, index) => (
                     <div
                       key={index}
                       className="grid grid-cols-1 sm:grid-cols-6 gap-4 px-3 py-4 items-start sm:items-center bg-white border-b border-gray-200 last:border-b-0"
                     >
-                      {/* Resource ID */}
                       <div>
                         <input
                           type="text"
@@ -1147,7 +1145,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Resource Name */}
                       <div>
                         <Select
                           options={resourceOptions}
@@ -1156,7 +1153,12 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             const updated = [...selectedResources];
                             updated[index] = {
                               ...updated[index],
-                              name: selected ? { value: selected.value, label: selected.label } : null,
+                              name: selected
+                                ? {
+                                    value: selected.value,
+                                    label: selected.label,
+                                  }
+                                : null,
                               customId: selected?.customId || "",
                               type: selected?.type
                                 ? { label: selected.type, value: selected.type }
@@ -1170,7 +1172,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Type */}
                       <div>
                         <input
                           type="text"
@@ -1181,7 +1182,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Specification */}
                       <div>
                         <input
                           type="text"
@@ -1196,7 +1196,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Comment */}
                       <div>
                         <input
                           type="text"
@@ -1211,13 +1210,14 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         />
                       </div>
 
-                      {/* Action */}
                       <div className="flex sm:justify-center items-center gap-2">
                         {selectedResources.length > 1 && (
                           <button
                             type="button"
                             onClick={() =>
-                              setSelectedResources(selectedResources.filter((_, i) => i !== index))
+                              setSelectedResources(
+                                selectedResources.filter((_, i) => i !== index)
+                              )
                             }
                             className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
                           >
@@ -1229,14 +1229,19 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                   ))}
                 </div>
 
-                {/* Add Resource Button — placed BELOW all rows */}
                 <div className="mt-4 flex justify-end">
                   <button
                     type="button"
                     onClick={() =>
                       setSelectedResources([
                         ...selectedResources,
-                        { name: null, type: null, specification: "", comment: "", customId: "" },
+                        {
+                          name: null,
+                          type: null,
+                          specification: "",
+                          comment: "",
+                          customId: "",
+                        },
                       ])
                     }
                     className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm rounded flex items-center gap-2"
@@ -1244,17 +1249,13 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     <Plus size={16} /> Add Resource
                   </button>
                 </div>
-
-
-
-
               </div>
 
-
-              {/* Manpower Data */}
               <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Manpower</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Manpower
+                  </h3>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Available manpower
@@ -1270,8 +1271,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                 </div>
               </div>
 
-
-              {/* Scrap Materials */}
               <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between mb-4">
@@ -1280,7 +1279,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     </h3>
                   </div>
 
-                  {/* Header */}
                   <div className="hidden sm:grid grid-cols-7 gap-1 bg-gradient-to-r from-blue-500 to-blue-500 text-white text-sm font-semibold uppercase tracking-wider px-3 py-2">
                     <div>Product Name</div>
                     <div>Comment</div>
@@ -1291,14 +1289,12 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     <div>Action</div>
                   </div>
 
-                  {/* Rows */}
                   <div className="border border-t-0 border-gray-300">
                     {scrapMaterials.map((material, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-1 sm:grid-cols-7 gap-4 px-3 py-4 items-start sm:items-center bg-white border-b border-gray-200 last:border-b-0"
                       >
-                        {/* Product Name */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Product Name
@@ -1332,7 +1328,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Comment */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Comment
@@ -1352,7 +1347,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Estimated Quantity */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Estimated Quantity
@@ -1372,7 +1366,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* UOM */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             UOM
@@ -1385,7 +1378,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           />
                         </div>
 
-                        {/* Unit Cost */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Unit Cost
@@ -1396,15 +1388,14 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.unit_cost || ""
                                 : material.unit_cost
-                                  ? "*****"
-                                  : ""
+                                ? "*****"
+                                : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
                         </div>
 
-                        {/* Total Part Cost */}
                         <div>
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             Total Part Cost
@@ -1415,15 +1406,14 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.total_part_cost || ""
                                 : material.total_part_cost
-                                  ? "*****"
-                                  : ""
+                                ? "*****"
+                                : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                           />
                         </div>
 
-                        {/* Action */}
                         <div className="flex sm:justify-center items-center gap-2">
                           <button
                             type="button"
@@ -1573,7 +1563,6 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                 />
               </div>
 
-              {/* Actions */}
               <div className="px-4 py-4 sm:px-6 flex justify-end gap-3 bg-white">
                 <button
                   type="button"
