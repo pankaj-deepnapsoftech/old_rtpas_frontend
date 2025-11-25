@@ -1436,7 +1436,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                 </div>
               </div>
 
-              <div className="bg-white border-b">
+              {/* <div className="bg-white border-b">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-md font-semibold text-gray-900">Scrap Management Data</h4>
@@ -1489,7 +1489,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                     </table>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Other Charges */}
               <div className="bg-white border-b">

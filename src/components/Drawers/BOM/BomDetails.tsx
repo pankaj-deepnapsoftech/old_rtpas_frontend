@@ -381,7 +381,7 @@ const BomDetails: React.FC<BomDetailsProps> = ({
             </div>
           )}
 
-          <div className="bg-white p-6 shadow-lg rounded-lg border">
+          {/* <div className="bg-white p-6 shadow-lg rounded-lg border">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-md font-semibold text-gray-900">Scrap Management Data</h4>
               <button
@@ -432,7 +432,7 @@ const BomDetails: React.FC<BomDetailsProps> = ({
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
 
           {/* Other Charges */}
           {otherCharges && (

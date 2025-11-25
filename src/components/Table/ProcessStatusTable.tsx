@@ -1612,7 +1612,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                         } hover:bg-gray-100 transition`}
                     >
                       <td className="p-3 text-gray-800">
-                        {sm.item?.name || "N/A"}
+                        {sm.scrap_name || "N/A"}
                       </td>
                       <td className="p-3 text-gray-800">
                         {(() => {

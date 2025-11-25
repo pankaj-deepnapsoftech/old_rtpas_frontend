@@ -1380,7 +1380,7 @@ const AddBom: React.FC<AddBomProps> = ({
                       </div>
                     ))}
                   </div>
-                  <div className="mt-6">
+                  {/* <div className="mt-6">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-md font-semibold text-gray-900">Scrap Management Data</h4>
                       <button
@@ -1431,7 +1431,7 @@ const AddBom: React.FC<AddBomProps> = ({
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
