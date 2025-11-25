@@ -11,7 +11,7 @@ import {
   useUpdateProductMutation,
   useUpdateStoreMutation,
 } from "../redux/api/api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
 import { Button } from "@chakra-ui/react";
 import { MdOutlineRefresh } from "react-icons/md";
@@ -26,10 +26,12 @@ import StoreTable from "../components/Table/StoreTable";
 
 const Approvals: React.FC = () => {
   const [cookies] = useCookies();
-  const [activeSection, setActiveSection] = useState("products");
-
   const { isSuper, allowedroutes } = useSelector((state: any) => state.auth);
-  const isAllowed = isSuper || allowedroutes.includes("approval");
+  const canAccessControlPanel = isSuper || allowedroutes.includes("approval");
+  const canApproveSales = canAccessControlPanel || allowedroutes.includes("sales");
+  const [activeSection, setActiveSection] = useState(
+    canAccessControlPanel ? "products" : "sales"
+  );
   //  Products
   const [productSearchKey, setProductSearchKey] = useState<
     string | undefined
@@ -548,6 +550,7 @@ const Approvals: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!canAccessControlPanel) return;
     fetchUnapprovedProductsHandler();
     fetchUnapprovedStoresHandler();
     fetchUnapprovedBuyersHandler();
@@ -555,7 +558,12 @@ const Approvals: React.FC = () => {
     fetchUnapprovedBomsHandler();
     fetchUnapprovedBomRMsHandler();
     fetchUnapprovedSalesHandler();
-  }, []);
+  }, [canAccessControlPanel]);
+
+  useEffect(() => {
+    if (!canApproveSales || canAccessControlPanel) return;
+    fetchUnapprovedSalesHandler();
+  }, [canApproveSales, canAccessControlPanel]);
 
   const handleModalSubmit = async (input: string) => {
     try {
@@ -774,23 +782,36 @@ const Approvals: React.FC = () => {
     setFilteredSales(results);
   }, [salesSearchKey]);
 
-  if (!isAllowed) {
+  const sections = useMemo(
+    () =>
+      [
+        { id: "products", label: "Products" },
+        { id: "stores", label: "Stores" },
+        { id: "buyers", label: "Buyers" },
+        { id: "sellers", label: "Suppliers" },
+        { id: "boms", label: "BOMs" },
+        { id: "bomRMs", label: "BOM Raw Materials" },
+        { id: "sales", label: "Sales" },
+      ].filter((section) =>
+        section.id === "sales" ? canApproveSales : canAccessControlPanel
+      ),
+    [canAccessControlPanel, canApproveSales]
+  );
+
+  useEffect(() => {
+    if (sections.length === 0) return;
+    if (!sections.some((section) => section.id === activeSection)) {
+      setActiveSection(sections[0].id);
+    }
+  }, [sections, activeSection]);
+
+  if (!canApproveSales) {
     return (
       <div className="text-center text-red-500">
         You are not allowed to access this route.
       </div>
     );
   }
-
-  const sections = [
-    { id: "products", label: "Products" },
-    { id: "stores", label: "Stores" },
-    { id: "buyers", label: "Buyers" },
-    { id: "sellers", label: "Suppliers" },
-    { id: "boms", label: "BOMs" },
-    { id: "bomRMs", label: "BOM Raw Materials" },
-    { id: "sales", label: "Sales" },
-  ];
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.background.page }}>
       <div className="p-2 lg:p-3">
