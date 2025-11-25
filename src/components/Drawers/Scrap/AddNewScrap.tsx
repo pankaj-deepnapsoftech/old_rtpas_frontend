@@ -288,7 +288,7 @@ const AddNewScrap = ({
             />
           </FormControl>
 
-          <FormControl className="mt-3 mb-5" isRequired>
+          <FormControl className="mt-3 mb-5">
             <FormLabel fontWeight="bold" color="gray.700">
               Price
             </FormLabel>
@@ -348,7 +348,7 @@ const AddNewScrap = ({
             />
           </FormControl>
 
-          <FormControl className="mt-3 mb-5" isRequired>
+          <FormControl className="mt-3 mb-5">
             <FormLabel fontWeight="bold" color="gray.700">
               Quantity
             </FormLabel>
