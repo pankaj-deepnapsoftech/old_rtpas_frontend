@@ -301,7 +301,7 @@ const UserProfile: React.FC = () => {
                     onClick={() => setIsModalOpen(true)}
                     style={{
                       backgroundColor: colors.button.secondary,
-                      color: colors.text.primary,
+                      color: colors.text.inverse,
                       marginTop: "10px",
                       
                     }}
