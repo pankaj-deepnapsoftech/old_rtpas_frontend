@@ -498,10 +498,9 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
 
   const markProcessDoneHandler = async (_id) => {
     try {
-      if(window.confirm("Are your sure you want to finish your production ")){
+      if (window.confirm("Are your sure you want to finish your production ")) {
         const response = await fetch(
-          process.env.REACT_APP_BACKEND_URL +
-          `production-process/done/${_id}`,
+          process.env.REACT_APP_BACKEND_URL + `production-process/done/${_id}`,
           {
             headers: {
               Authorization: `Bearer ${cookies?.access_token}`,
