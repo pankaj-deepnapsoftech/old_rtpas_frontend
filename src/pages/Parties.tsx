@@ -139,6 +139,9 @@ const Parties = () => {
         'Date Added': party.createdAt ? new Date(party.createdAt).toLocaleDateString() : 'N/A',
         'Consignee Name': party?.consignee_name?.[0] || "N/A",
         'Company Name': party.company_name || 'N/A',
+        'Contact Person Name': party.type?.toLowerCase?.() === 'company'
+          ? party.contact_person_name || 'N/A'
+          : '-',
         'Email': Array.isArray(party.email_id) && party.email_id.length > 0
           ? party.email_id.join(', ')
           : party.email_id || 'N/A',
@@ -163,6 +166,7 @@ const Parties = () => {
         { wch: 20 },
         { wch: 20 },
         { wch: 25 },
+        { wch: 20 },
         { wch: 15 },
         { wch: 12 },
         { wch: 15 },
