@@ -178,22 +178,26 @@ const InventoryApprovals: React.FC = () => {
     const q = (searchKey || "").toLowerCase().trim();
     if (activeTab === "raw") {
       if (!q) return setRmFiltered(rmData);
-      const res = rmData.filter((emp: any) => {
-        const firstName = emp.first_name?.toString().toLowerCase() || "";
-        const lastName = emp.last_name?.toString().toLowerCase() || "";
-        const email = emp.email?.toString().toLowerCase() || "";
-        const phone = emp.phone?.toString() || "";
-        const role = emp?.role?.role?.toString().toLowerCase() || "";
-        const createdAt = emp?.createdAt
-          ? new Date(emp.createdAt)
+      const res = rmData.filter((item: any) => {
+        const name = item.name?.toString().toLowerCase() || "";
+        const productId = item.product_id?.toString().toLowerCase() || "";
+        const bomName = item.bom_name?.toString().toLowerCase() || "";
+        const category = item.category?.toString().toLowerCase() || "";
+        const inventoryCategory = item.inventory_category?.toString().toLowerCase() || "";
+        const uom = item.uom?.toString().toLowerCase() || "";
+        const quantity = item.quantity?.toString() || "";
+        const price = item.price?.toString() || "";
+        const currentStock = item.current_stock?.toString() || "";
+        const createdAt = item?.createdAt
+          ? new Date(item.createdAt)
             .toISOString()
             .substring(0, 10)
             .split("-")
             .reverse()
             .join("")
           : "";
-        const updatedAt = emp?.updatedAt
-          ? new Date(emp.updatedAt)
+        const updatedAt = item?.updatedAt
+          ? new Date(item.updatedAt)
             .toISOString()
             .substring(0, 10)
             .split("-")
@@ -201,11 +205,15 @@ const InventoryApprovals: React.FC = () => {
             .join("")
           : "";
         return (
-          firstName.includes(q) ||
-          lastName.includes(q) ||
-          email.includes(q) ||
-          phone.includes(q) ||
-          role.includes(q) ||
+          name.includes(q) ||
+          productId.includes(q) ||
+          bomName.includes(q) ||
+          category.includes(q) ||
+          inventoryCategory.includes(q) ||
+          uom.includes(q) ||
+          quantity.includes(q) ||
+          price.includes(q) ||
+          currentStock.includes(q) ||
           createdAt.includes(q.replaceAll("/", "")) ||
           updatedAt.includes(q.replaceAll("/", ""))
         );
@@ -277,7 +285,7 @@ const InventoryApprovals: React.FC = () => {
                   className="text-2xl md:text-3xl font-bold"
                   style={{ color: colors.text.primary }}
                 >
-                  Inventory Approvals
+                  Inventory Accept
                 </h1>
                 <p
                   className="text-sm mt-1"
