@@ -201,7 +201,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
     }
   };
 
-  
+
 
   const isAllSelected = page.length > 0 && selectedBoms.length === page.length;
   const isIndeterminate =

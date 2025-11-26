@@ -163,13 +163,13 @@ const FinishedGoodsTable = ({
                     ? new Date(row.createdAt).toLocaleDateString()
                     : "—"}
                 </td>
-                <td className="p-3 text-right">
-                  {/* Request for Finish Goods button */}
+                <td className="p-3 text-right whitespace-nowrap">
+                 
                   {row?.status !== "Out Finished Goods" && (
                     <button
                       disabled={row?.status === "allocated finish goods"}
                       onClick={() => onApprove(row?._id)}
-                      className="px-3 py-2 text-xs font-medium rounded-md border transition-all mr-2 whitespace-nowrap"
+                      className="px-3 py-2 text-xs font-medium rounded-md border transition-all whitespace-nowrap cursor-pointer"
                       style={{
                         backgroundColor: colors.primary[50],
                         borderColor: colors.primary[200],
@@ -183,7 +183,7 @@ const FinishedGoodsTable = ({
                     </button>
                   )}
 
-                  {/* Receive by Inventory button */}
+                
                   {row?.status === "Out Finished Goods" && (
                     <button
                       onClick={() => receiveByInventory(row?._id)}

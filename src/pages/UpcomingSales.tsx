@@ -1,6 +1,16 @@
 //@ts-nocheck
 
-import { Button } from "@chakra-ui/react";
+import {
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { MdOutlineRefresh } from "react-icons/md";
 import { toast } from "react-toastify";
@@ -21,6 +31,13 @@ const UpcomingSales: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const {
+    isOpen: isConfirmOpen,
+    onOpen: openConfirmModal,
+    onClose: closeConfirmModal,
+  } = useDisclosure();
 
   const fetchUpcomingSales = async (currentPage = page) => {
     try {
@@ -82,6 +99,54 @@ const UpcomingSales: React.FC = () => {
     setFilteredSales(results);
   }, [searchKey, sales]);
 
+  const handleComplete = async (saleId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.patch(
+        `${process.env.REACT_APP_BACKEND_URL}sale/mark-completed/${saleId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${cookies?.access_token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Remove from both sales and filteredSales
+        const updatedSales = sales.filter((sale: any) => sale._id !== saleId);
+        const updatedFilteredSales = filteredSales.filter((sale: any) => sale._id !== saleId);
+        
+        setSales(updatedSales);
+        setFilteredSales(updatedFilteredSales);
+        
+        toast.success("Order marked as completed and removed from list");
+      }
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to mark order as completed"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const promptCompletion = (saleId: string, orderId: string) => {
+    setSelectedSaleId(saleId);
+    setSelectedOrderId(orderId);
+    openConfirmModal();
+  };
+
+  const confirmCompletion = async () => {
+    if (!selectedSaleId) return;
+    await handleComplete(selectedSaleId);
+    setSelectedSaleId(null);
+    setSelectedOrderId(null);
+    closeConfirmModal();
+  };
+
   if (!isAllowed) {
     return (
       <div className="text-center text-red-500 p-6">
@@ -91,6 +156,7 @@ const UpcomingSales: React.FC = () => {
   }
 
   return (
+    <>
     <div
       className="min-h-screen p-4 lg:p-6"
       style={{ backgroundColor: colors.background.page }}
@@ -108,7 +174,7 @@ const UpcomingSales: React.FC = () => {
               className="text-2xl lg:text-3xl font-bold"
               style={{ color: colors.text.primary }}
             >
-              Upcoming Sales
+              Coming Production
             </h1>
             <p
               className="text-sm mt-1"
@@ -228,6 +294,12 @@ const UpcomingSales: React.FC = () => {
                 >
                   Created At
                 </th>
+                <th
+                  className="px-4 py-3 text-left font-semibold"
+                  style={{ color: colors.table.headerText }}
+                >
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -235,7 +307,7 @@ const UpcomingSales: React.FC = () => {
                 <tr>
                   <td
                     className="px-4 py-8 text-center"
-                    colSpan={6}
+                    colSpan={7}
                     style={{ color: colors.text.secondary }}
                   >
                     Loading...
@@ -245,7 +317,7 @@ const UpcomingSales: React.FC = () => {
                 <tr>
                   <td
                     className="px-4 py-8 text-center"
-                    colSpan={6}
+                    colSpan={7}
                     style={{ color: colors.text.secondary }}
                   >
                     No upcoming sales found
@@ -323,6 +395,23 @@ const UpcomingSales: React.FC = () => {
                           })
                         : "-"}
                     </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        onClick={() =>
+                          promptCompletion(sale._id, sale.order_id || "")
+                        }
+                        size="sm"
+                        style={{
+                          backgroundColor: colors.success[500],
+                          color: "white",
+                        }}
+                        _hover={{
+                          backgroundColor: colors.success[600],
+                        }}
+                      >
+                        Completed
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -341,6 +430,32 @@ const UpcomingSales: React.FC = () => {
         )}
       </div>
     </div>
+
+    <Modal isOpen={isConfirmOpen} onClose={closeConfirmModal} isCentered>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Mark as Completed?</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          Are you sure you want to mark{" "}
+          <strong>{selectedOrderId || "this order"}</strong> as completed? This
+          will remove it from the Coming Production list.
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" mr={3} onClick={closeConfirmModal}>
+            Cancel
+          </Button>
+          <Button
+            colorScheme="green"
+            onClick={confirmCompletion}
+            isLoading={isLoading}
+          >
+            Yes, Complete
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+    </>
   );
 };
 

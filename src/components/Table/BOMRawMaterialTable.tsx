@@ -62,6 +62,7 @@ interface BOMRawMaterialTableProps {
     product_or_service: string;
     current_stock: number;
     price: number;
+    quantity?: number;
     min_stock?: number;
     max_stock?: number;
     hsn_code?: number;
@@ -130,6 +131,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
     product_or_service: string;
     current_stock: number;
     price: number;
+    quantity?: number;
     min_stock?: number;
     max_stock?: number;
     hsn_code?: number;
@@ -170,6 +172,10 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
       {
         Header: "Product/Service",
         accessor: "product_or_service",
+      },
+      {
+        Header: "Quantity",
+        accessor: "quantity",
       },
       {
         Header: "UOM",
@@ -273,6 +279,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
     product_or_service: string;
     current_stock: number;
     price: number;
+    quantity?: number;
     min_stock?: number;
     max_stock?: number;
     hsn_code?: number;
@@ -438,6 +445,8 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                                 original.inventory_category?.slice(1) || "N/A"}
                             </span>
                           );
+                        } else if (colId === "quantity") {
+                          displayValue = original.quantity || 0;
                         } else if (colId === "price") {
                           displayValue = `₹${original.price || 0}`;
                         } else if (colId === "createdAt") {
@@ -555,38 +564,71 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
 
                           {/* Accept Raw Material Request Button */}
                           {(() => {
+                            // Check if current stock is sufficient
+                            const currentStock = original.current_stock || 0;
+                            const requiredQuantity = original.quantity || 0;
+                            const isStockSufficient = currentStock >= requiredQuantity;
+                            
+                            const isAlreadyAccepted = 
+                              isApproved || original.isInventoryApprovalClicked;
+                            
                             const isAcceptDisabled =
-                              isApproved ||
+                              isAlreadyAccepted ||
                               original.bom_status !==
                                 "raw material approval pending" ||
-                              original.isInventoryApprovalClicked;
+                              !isStockSufficient; // Disable if stock is insufficient
 
-                            const acceptButtonLabel = isAcceptDisabled
-                              ? "Accepted"
-                              : "Accept Request";
+                            let acceptButtonLabel = "Accept Request";
+                            let buttonBgColor = colors.success[500];
+                            
+                            if (isAlreadyAccepted) {
+                              acceptButtonLabel = "Accepted";
+                              buttonBgColor = colors.gray[400];
+                            } else if (!isStockSufficient) {
+                              acceptButtonLabel = `Insufficient Stock (${currentStock}/${requiredQuantity})`;
+                              buttonBgColor = colors.error[500];
+                            }
 
                             return (
                               <Button
                                 size="sm"
                                 style={{
-                                  backgroundColor: isAcceptDisabled
-                                    ? colors.success[700]
-                                    : colors.success[500],
+                                  backgroundColor: buttonBgColor,
                                   color: colors.text.inverse,
                                   cursor: isAcceptDisabled
                                     ? "not-allowed"
                                     : "pointer",
+                                  opacity: isAcceptDisabled ? 0.7 : 1,
                                 }}
                                 _hover={{
                                   bg: isAcceptDisabled
-                                    ? colors.success[700]
-                                    : colors.success[600],
+                                    ? buttonBgColor
+                                    : isStockSufficient
+                                    ? colors.success[600]
+                                    : colors.error[600],
                                 }}
                                 onClick={() => {
+                                  if (!isStockSufficient) {
+                                    toast.error(
+                                      `Insufficient stock! Current stock: ${currentStock}, Required: ${requiredQuantity}`
+                                    );
+                                    return;
+                                  }
+                                  if (isAlreadyAccepted) {
+                                    toast.info("This request has already been accepted");
+                                    return;
+                                  }
                                   approveProductHandler(original._id);
                                 }}
                                 leftIcon={<FaCheckCircle />}
                                 disabled={isAcceptDisabled}
+                                title={
+                                  !isStockSufficient
+                                    ? `Insufficient stock! Current: ${currentStock}, Required: ${requiredQuantity}`
+                                    : isAlreadyAccepted
+                                    ? "This request has already been accepted"
+                                    : "Click to accept this raw material request"
+                                }
                               >
                                 {acceptButtonLabel}
                               </Button>

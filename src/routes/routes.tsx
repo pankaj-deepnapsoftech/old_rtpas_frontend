@@ -204,7 +204,7 @@ const routes = [
     icon: <MdOutlineProductionQuantityLimits />,
     sublink: [
       {
-        name: "Upcoming Sales",
+        name: "Coming Production",
         icon: <Calendar />,
         path: "upcoming-sales",
         element: <UpcomingSales />,
