@@ -379,7 +379,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
 
           const oldDifference = originalEstimatedQty - originalProducedQty;
           const newDifference = estimatedQty - producedQty;
-          
+
           const adjustmentAmount = newDifference - oldDifference;
 
           if (adjustmentAmount === 0) return;
@@ -393,8 +393,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
           const currentQty = Number(currentScrap.qty) || 0;
 
           const newQty = currentQty - (estimatedQty - producedQty);
-
-          
 
           const updateResponse = await fetch(
             `${process.env.REACT_APP_BACKEND_URL}scrap/update/${scrapId}`,
@@ -1257,7 +1255,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             const value = +e.target.value;
                             const maxAllowed =
                               Number(finishedGoodRemainingQty) || 0;
-                            console.log(">>>",maxAllowed)
+                            console.log(">>>", maxAllowed);
                             if (value > maxAllowed) {
                               toast.error(
                                 "Produced Qty cannot be more than Estimated Qty"
@@ -1514,12 +1512,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             REMAIN. QTY
                           </label>
-                          {<input
-                            type="number"
-                            value={material?.remaining_quantity } 
-                            readOnly
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
-                          />}
+                          {
+                            <input
+                              type="number"
+                              value={material?.remaining_quantity}
+                              readOnly
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
+                            />
+                          }
                         </div>
 
                         <div>
@@ -1774,6 +1774,16 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             value={material.produced_quantity || ""}
                             onChange={(e) => {
                               if (finishedGoodUnchangedAndEqual) return;
+                              const newValue = Number(e.target.value);
+                              const estQty =
+                                Number(material.estimated_quantity) || 0;
+                              if (newValue > estQty) {
+                                if (typeof toast !== "undefined")
+                                  toast.error(
+                                    "Scrap QTY cannot be greater than EST. QTY"
+                                  );
+                                return;
+                              }
                               const newMaterials = [...scrapMaterials];
                               newMaterials[index].produced_quantity =
                                 e.target.value;

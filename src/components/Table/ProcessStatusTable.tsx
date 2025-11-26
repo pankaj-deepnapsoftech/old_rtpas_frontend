@@ -969,50 +969,61 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                               </button>
                             )}
 
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress" ||
+                              row.original.status === "production paused") && (
+                              <button
+                                onClick={() =>
+                                  openUpdateProcessDrawerHandler(
+                                    row?.original?._id
+                                  )
+                                }
+                                className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
+                                style={
+                                  row.original.status === "production paused"
+                                    ? {
+                                        color: "#c97803",
+                                        backgroundColor: "#ff900026",
+                                      }
+                                    : {
+                                        color: colors.primary[600],
+                                        backgroundColor: colors.primary[50],
+                                      }
+                                }
+                                title={
+                                  row.original.status === "production paused"
+                                    ? "Resume process"
+                                    : "Start process"
+                                }
+                              >
+                                {row.original.status === "production paused"
+                                  ? "Resume"
+                                  : "Start"}
+                              </button>
+                            )}
 
-                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused" )  && <button
-                              onClick={() => openUpdateProcessDrawerHandler(row?.original?._id)}
-                              className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                              style={
-                                row.original.status === "production paused"
-                                  ? {
+                            {(row.original.status === "production paused" ||
+                              (row.original?.finished_good
+                                ?.remaining_quantity === 0 &&
+                                row.original.status === "compeleted")) && (
+                              <button
+                                className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
+                                onClick={() =>
+                                  markProcessDoneHandler(row.original?._id)
+                                }
+                                style={{
+                                  color: "#05ed71",
+                                  backgroundColor: "#8df2bc66",
+                                }}
+                              >
+                                Finish
+                              </button>
+                            )}
 
-                                    color: "#c97803",
-                                    backgroundColor: "#ff900026",
-                                  }
-                                  : {
-
-                                    color: colors.primary[600],
-                                    backgroundColor: colors.primary[50],
-                                  }
-                              }
-                              title={
-                                row.original.status === "production paused"
-                                  ? "Resume process"
-                                  : "Start process"
-                              }
-                            >
-                              {row.original.status === "production paused" ? "Resume" : "Start"}
-                            </button>}
-
-                            {(row.original.status === "production paused" ||( row.original?.finished_good?.remaining_quantity === 0 && row.original.status === "compeleted") ) &&
-                               (
-                                <button
-                                  className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                                  onClick={() =>
-                                    markProcessDoneHandler(row.original?._id)
-                                  }
-                                  style={{
-                                    color: "#05ed71",
-                                    backgroundColor: "#8df2bc66",
-                                  }}
-                                >
-                                  Finish
-                                </button>
-                              )}
-
-
-                            {(row.original.status === "production started" || row.original.status === "production in progress" ) &&
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress") &&
                               !shouldHideStartPauseButtons(row.original) && (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
