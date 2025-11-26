@@ -17,7 +17,6 @@ import { io } from "socket.io-client";
 const InventoryApprovals: React.FC = () => {
   const { isSuper, allowedroutes } = useSelector((state: any) => state.auth);
   const isAllowed = isSuper || allowedroutes.includes("inventory");
-  const [isApproved, setIsApproved] = useState(false);
   const [cookies] = useCookies();
   const token = cookies?.access_token;
 
@@ -80,7 +79,6 @@ const InventoryApprovals: React.FC = () => {
       }
 
       toast.success("Raw material approved successfully!");
-      setIsApproved(true);
       fetchRM();
     } catch (err: any) {
       toast.error(err?.message || "Something went wrong");
@@ -433,7 +431,6 @@ const InventoryApprovals: React.FC = () => {
                 isLoadingProducts={isLoadingRM}
                 approveProductHandler={approveRM}
                 onRefresh={fetchRM}
-                isApproved={isApproved}
               />
             ) : (
               <FinishedGoodsTable

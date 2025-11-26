@@ -76,7 +76,6 @@ interface BOMRawMaterialTableProps {
   deleteProductHandler?: (id: string) => void;
   approveProductHandler?: (id: string) => void;
   onRefresh?: () => void;
-  isApproved: boolean;
 }
 //newwww
 const updateProcessStatus = async (id, status) => {
@@ -119,7 +118,6 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
   deleteProductHandler,
   approveProductHandler,
   onRefresh,
-  isApproved,
 }) => {
   const columns: Column<{
     name: string;
@@ -570,7 +568,7 @@ const BOMRawMaterialTable: React.FC<BOMRawMaterialTableProps> = ({
                             const isStockSufficient = currentStock >= requiredQuantity;
                             
                             const isAlreadyAccepted = 
-                              isApproved || original.isInventoryApprovalClicked;
+                              !!original.isInventoryApprovalClicked;
                             
                             const isAcceptDisabled =
                               isAlreadyAccepted ||
