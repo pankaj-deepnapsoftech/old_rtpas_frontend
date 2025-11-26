@@ -1149,12 +1149,13 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         </label>
                         <input
                           type="number"
+                          // readOnly={finishedGoodRemainingQty == 0}
                           value={finishedGoodProducedQuantity || ""}
                           onChange={(e) => {
                             const value = +e.target.value;
                             const maxAllowed =
-                              Number(finishedGoodQuantity) || 0;
-
+                              Number(finishedGoodRemainingQty) || 0;
+                            console.log(">>>",maxAllowed)
                             if (value > maxAllowed) {
                               toast.error(
                                 "Produced Qty cannot be more than Estimated Qty"
@@ -1178,7 +1179,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         </label>
                         <input
                           type="number"
-                          value={finishedGoodRemainingQty || ""}
+                          value={parseInt(finishedGoodRemainingQty) || "0"}
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                         />
@@ -1407,12 +1408,12 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             REMAIN. QTY
                           </label>
-                          <input
+                          {<input
                             type="number"
-                            value={material.remaining_quantity || ""}
+                            value={material?.remaining_quantity } 
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
-                          />
+                          />}
                         </div>
 
                         <div>

@@ -47,8 +47,8 @@ const ProductionStatus: React.FC = () => {
         throw new Error(data.message);
       }
 
-      // Filter for processes with status "production started"
-      const filteredProcesses = data.production_processes.filter(
+    
+      const filteredProcesses = data?.production_processes.filter(
         (process: any) =>
           [
             "production started",
@@ -58,7 +58,7 @@ const ProductionStatus: React.FC = () => {
             "allocated finish goods",
             "received",
             "dispatched",
-            "Out Finished Goods",
+            "out finished goods",
             "production paused",
           ].includes(process.status.toLowerCase())
       );

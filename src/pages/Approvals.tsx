@@ -1436,13 +1436,14 @@ const Approvals: React.FC = () => {
                             <Button
                               size="sm"
                               onClick={() => {
-                                const currentStock = row?.product_id[0]?.current_stock;
+                                const currentStock = row?.product_id[0]?.current_stock; 
                                 const qty = row?.product_qty;
 
-                                if (currentStock > qty) {
+                                if (currentStock >= 1) {
                                   setOpenModal(true)
                                   setCurrentStock({currentStock:row?.product_id[0]?.current_stock,
-                                    item_name: row?.product_id[0]?.name 
+                                    item_name: row?.product_id[0]?.name ,
+                                    sale_qyt: row.product_qty
                                   })
                                   setSelectedSaleId(row?._id)
                                 } else {
@@ -1467,29 +1468,46 @@ const Approvals: React.FC = () => {
       </div>
       {
         openModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg w-[350px] shadow-lg">
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] z-50">
+            <div className="bg-white rounded-xl w-[380px] shadow-2xl p-6 animate-fadeIn">
 
-              <h2 className="text-lg font-semibold mb-3">Enter Value</h2>
-              <label>Current Stock  Available: {currentStock?.item_name} ( {currentStock?.currentStock})</label>
-              <input  
+           
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Enter Value
+              </h2>
+
+           
+              <div className="mb-4 text-sm text-gray-600 space-y-1">
+                <p>
+                  <span className="font-medium text-gray-800">Current Stock:</span>
+                  {currentStock?.item_name} ({currentStock?.currentStock})
+                </p>
+                <p>
+                  <span className="font-medium text-gray-800">Sale Qty:</span>
+                  {currentStock?.sale_qyt}
+                </p>
+              </div>
+
+          
+              <input
                 type="text"
-                className="border w-full px-3 py-2 rounded mb-4"
-                placeholder="Type something..."
+                className="border border-gray-300 w-full px-3 py-2 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition mb-5"
+                placeholder="Enter value..."
                 value={modalInput}
                 onChange={(e) => setModalInput(e.target.value)}
-              />     
-                             
+              />
+
+            
               <div className="flex justify-end gap-3">
                 <button
-                  className="px-4 py-2 bg-gray-300 rounded"
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
                   onClick={() => setOpenModal(false)}
                 >
                   Cancel
                 </button>
 
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow transition"
                   onClick={() => {
                     handleModalSubmit(modalInput);
                     setOpenModal(false);
@@ -1501,6 +1519,7 @@ const Approvals: React.FC = () => {
 
             </div>
           </div>
+
         )
       }
 

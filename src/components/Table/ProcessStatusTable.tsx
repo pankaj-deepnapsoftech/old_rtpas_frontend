@@ -500,20 +500,22 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
 
   const markProcessDoneHandler = async (_id) => {
     try {
-      const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL +
-        `production-process/done/${_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${cookies?.access_token}`,
-          },
+      if(window.confirm("Are your sure you want to finish your production ")){
+        const response = await fetch(
+          process.env.REACT_APP_BACKEND_URL +
+          `production-process/done/${_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${cookies?.access_token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message);
         }
-      );
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message);
+        toast.success(data.message);
       }
-      toast.success(data.message);
       // closeDrawerHandler();
       fetchProcessHandler();
     } catch (error: any) {
@@ -937,7 +939,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                           <div className="flex items-center justify-center gap-2">
 
 
-                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused") && <button
+                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused" )  && <button
                               onClick={() => openUpdateProcessDrawerHandler(row?.original?._id)}
                               className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
                               style={
@@ -962,9 +964,8 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                               {row.original.status === "production paused" ? "Resume" : "Start"}
                             </button>}
 
-                            {(row.original.status === "production started" || row.original.status === "production in progress") &&
-                              row?.original?.finished_good?.estimated_quantity ===
-                              row?.original?.finished_good?.produced_quantity && (
+                            {(row.original.status === "production paused" ||( row.original?.finished_good?.remaining_quantity === 0 && row.original.status === "compeleted") ) &&
+                               (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
                                   onClick={() => markProcessDoneHandler(row.original?._id)}
@@ -979,7 +980,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                             }
 
 
-                            {(row.original.status === "production started" || row.original.status === "production in progress") &&
+                            {(row.original.status === "production started" || row.original.status === "production in progress" ) &&
                               !shouldHideStartPauseButtons(row.original) && (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
