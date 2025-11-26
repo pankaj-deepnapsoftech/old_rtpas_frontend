@@ -1449,7 +1449,7 @@ const Approvals: React.FC = () => {
                                 } else {
                                   approveSaleHandler(row?._id);
                                 }
-                              }}
+                              }} 
                             >
                               Approve
                             </Button>
