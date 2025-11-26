@@ -141,7 +141,7 @@ const FinishedGoodsTable = ({
                   {row?.finished_good?.item?.product_id || "—"}
                 </td>
                 <td className="p-3" style={{ color: colors.text.primary }}>
-                  {row?.finished_good?.produced_quantity || 0}
+                  {row?.finished_good?.final_produce_quantity || 0} 
                 </td>
                 <td>
                   <span

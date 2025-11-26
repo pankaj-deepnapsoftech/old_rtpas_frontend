@@ -939,7 +939,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                           <div className="flex items-center justify-center gap-2">
 
 
-                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused" )  && <button
+                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused" || row.original.status === "received" )  && <button
                               onClick={() => openUpdateProcessDrawerHandler(row?.original?._id)}
                               className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
                               style={
@@ -964,8 +964,14 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                               {row.original.status === "production paused" ? "Resume" : "Start"}
                             </button>}
 
-                            {(row.original.status === "production paused" ||( row.original?.finished_good?.remaining_quantity === 0 && row.original.status === "compeleted") ) &&
-                               (
+                            {(
+                              (
+                                row.original.status === "production paused" ||
+                                (
+                                  row.original?.finished_good?.remaining_quantity === 0 &&
+                                  row.original.status !== "completed"
+                                )
+                              ) && (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
                                   onClick={() => markProcessDoneHandler(row.original?._id)}
@@ -977,7 +983,8 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                                   Finish
                                 </button>
                               )
-                            }
+                            )}
+
 
 
                             {(row.original.status === "production started" || row.original.status === "production in progress" ) &&
@@ -1462,7 +1469,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                 <div
                   className="h-4 rounded-full transition-all duration-500 ease-out"
                   style={{
-                    width: `${((selectedProcess.finished_good?.produced_quantity || 0) /
+                    width: `${((selectedProcess.finished_good?.final_produce_quantity + selectedProcess.finished_good?.inventory_last_changes_quantity || 0) /
                       (selectedProcess.finished_good?.estimated_quantity ||
                         1)) *
                       100
@@ -1472,7 +1479,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                 />
               </div>
               <p className="text-xs mt-2 text-gray-600">
-                {selectedProcess.finished_good?.produced_quantity || 0} /{" "}
+                {selectedProcess.finished_good?.final_produce_quantity + selectedProcess.finished_good?.inventory_last_changes_quantity || 0} /{" "}
                 {selectedProcess.finished_good?.estimated_quantity || 0} units
                 completed
               </p>
@@ -1527,7 +1534,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                       {selectedProcess.finished_good?.estimated_quantity || 0}
                     </td>
                     <td className="p-3 text-gray-800">
-                      {selectedProcess.finished_good?.produced_quantity || 0}
+                      {selectedProcess.finished_good?.final_produce_quantity + selectedProcess.finished_good?.inventory_last_changes_quantity || 0}
                     </td>
                     <td className="p-3 text-gray-800">
                       ₹{selectedProcess.finished_good?.item?.price || 0}
