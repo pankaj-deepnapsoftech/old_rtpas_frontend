@@ -143,7 +143,11 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   ]);
 
   const [scrapCatalog, setScrapCatalog] = useState<any[] | []>([]);
-  const [isLoadingScrapCatalog, setIsLoadingScrapCatalog] = useState<boolean>(false);
+  const [isLoadingScrapCatalog, setIsLoadingScrapCatalog] =
+    useState<boolean>(false);
+  const [originalScrapMaterials, setOriginalScrapMaterials] = useState<any[]>(
+    []
+  );
 
   // ---------- Helpers ----------
 
@@ -334,7 +338,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       data.bom?.scrap_materials?.forEach((material: any) => {
         const itemObj = material?.item || null;
         const scFromCatalog = scrapCatalog.find(
-          (s: any) => s._id === (itemObj?._id || material?.item || material?.scrap_id)
+          (s: any) =>
+            s._id === (itemObj?._id || material?.item || material?.scrap_id)
         );
         const itemSelect = itemObj
           ? { value: itemObj._id, label: itemObj.name }
@@ -346,16 +351,26 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
 
         scrap.push({
           _id: material?._id,
-          item: itemObj?._id || material?.item || material?.scrap_id || undefined,
+          item:
+            itemObj?._id || material?.item || material?.scrap_id || undefined,
           item_name: itemSelect,
           description: material?.description || "",
           quantity: material?.quantity || "",
           uom: material?.uom || itemObj?.uom || scFromCatalog?.uom || "",
-          unit_cost: material?.unit_cost || itemObj?.price || scFromCatalog?.price || "",
+          unit_cost:
+            material?.unit_cost || itemObj?.price || scFromCatalog?.price || "",
           total_part_cost: material?.total_part_cost || "",
         });
       });
       setScrapMaterials(scrap);
+
+      // Store original scrap materials for comparison during update
+      setOriginalScrapMaterials(
+        scrap.map((s: any) => ({
+          item: s.item,
+          quantity: Number(s.quantity) || 0,
+        }))
+      );
 
       setLabourCharges(data.bom?.other_charges?.labour_charges);
       setMachineryCharges(data.bom?.other_charges?.machinery_charges);
@@ -468,7 +483,9 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
           total_part_cost: material?.total_part_cost,
           scrap_id: material?.item || undefined,
           scrap_name:
-            (typeof material?.item_name === "object" && material?.item_name?.label) || undefined,
+            (typeof material?.item_name === "object" &&
+              material?.item_name?.label) ||
+            undefined,
         };
         if (material?._id && material._id.trim() !== "") {
           materialData._id = material._id;
@@ -514,6 +531,12 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
 
     try {
       const response = await updateBom(body).unwrap();
+
+      // Update scrap quantities after successful BOM update
+      if (modifiedScrapMaterials && modifiedScrapMaterials.length > 0) {
+        await updateScrapQuantitiesOnBomUpdate(modifiedScrapMaterials);
+      }
+
       toast.success(response?.message);
       fetchBomsHandler();
       closeDrawerHandler();
@@ -523,6 +546,95 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         closeDrawerHandler();
       }
       toast.error(error?.data?.message || "Something went wrong");
+    }
+  };
+
+  // Function to update scrap quantities when BOM is updated
+  const updateScrapQuantitiesOnBomUpdate = async (newScrapMaterials: any[]) => {
+    try {
+      const updatePromises = newScrapMaterials.map(async (newScrapMaterial) => {
+        const scrapId = newScrapMaterial.item || newScrapMaterial.scrap_id;
+        const newQuantity = Number(newScrapMaterial.quantity) || 0;
+
+        const originalScrap = originalScrapMaterials.find(
+          (s: any) => s.item === scrapId
+        );
+        const originalQuantity = originalScrap
+          ? Number(originalScrap.quantity) || 0
+          : 0;
+
+        const quantityDifference = newQuantity - originalQuantity;
+
+        // Only update if there's a difference
+        if (quantityDifference === 0) return;
+
+        // Find the current scrap from catalog
+        const currentScrap = scrapCatalog.find((s: any) => s._id === scrapId);
+        if (!currentScrap) {
+          console.warn(`Scrap with ID ${scrapId} not found in catalog`);
+          return;
+        }
+
+        const currentQty = Number(currentScrap.qty) || 0;
+        const newQty = currentQty + quantityDifference;
+
+        // Update the scrap quantity
+        const updateResponse = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}scrap/update/${scrapId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${cookies?.access_token}`,
+            },
+            body: JSON.stringify({
+              qty: newQty,
+            }),
+          }
+        );
+
+        if (!updateResponse.ok) {
+          console.error(
+            `Failed to update scrap quantity for ${currentScrap.Scrap_name}`
+          );
+        }
+      });
+
+      // Handle newly added scrap materials (not in original)
+      const newlyAddedScraps = newScrapMaterials.filter(
+        (newScrap) =>
+          !originalScrapMaterials.some(
+            (orig: any) => orig.item === (newScrap.item || newScrap.scrap_id)
+          )
+      );
+
+      const addPromises = newlyAddedScraps.map(async (scrapMaterial) => {
+        const scrapId = scrapMaterial.item || scrapMaterial.scrap_id;
+        const quantityToAdd = Number(scrapMaterial.quantity) || 0;
+
+        const currentScrap = scrapCatalog.find((s: any) => s._id === scrapId);
+        if (!currentScrap) return;
+
+        const currentQty = Number(currentScrap.qty) || 0;
+        const newQty = currentQty + quantityToAdd;
+
+        await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}scrap/update/${scrapId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${cookies?.access_token}`,
+            },
+            body: JSON.stringify({ qty: newQty }),
+          }
+        );
+      });
+
+      await Promise.all([...updatePromises, ...addPromises]);
+    } catch (error: any) {
+      console.error("Error updating scrap quantities:", error);
+      // Don't show error to user as BOM was updated successfully
     }
   };
 
@@ -1306,7 +1418,9 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             placeholder="Select"
                             value={
                               material.item_name ||
-                              scarpMaterials.find((o: any) => o.value === material.item) ||
+                              scarpMaterials.find(
+                                (o: any) => o.value === material.item
+                              ) ||
                               null
                             }
                             onChange={(d: any) => {
@@ -1320,7 +1434,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                                 newMaterials[index].uom = sc.uom;
                                 if (material.quantity) {
                                   newMaterials[index].total_part_cost =
-                                    Number(sc.price) * Number(material.quantity);
+                                    Number(sc.price) *
+                                    Number(material.quantity);
                                 }
                               }
                               setScrapMaterials(newMaterials);

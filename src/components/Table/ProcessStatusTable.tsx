@@ -164,8 +164,6 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
     }
   };
 
-
-
   const markOutFinishGoods = async (id) => {
     try {
       const baseURL = process.env.REACT_APP_BACKEND_URL || "";
@@ -370,7 +368,8 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
       await Promise.all(deletePromises);
 
       toast.success(
-        `Successfully deleted ${selectedProcesses.length} process${selectedProcesses.length > 1 ? "es" : ""
+        `Successfully deleted ${selectedProcesses.length} process${
+          selectedProcesses.length > 1 ? "es" : ""
         }`
       );
 
@@ -403,7 +402,7 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
         setCloseModal(true);
         if (fetchProcessHandler) {
           fetchProcessHandler();
-          setSelectedProcess(null)
+          setSelectedProcess(null);
         }
       } else {
         toast.error("Failed to move to inventory");
@@ -421,10 +420,10 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
   // Disable Move to Inventory ONLY when status is 'moved to inventory' AND produced quantity equals estimated quantity
   const isMoveToInventoryDisabled = Boolean(
     selectedProcess &&
-    selectedProcess.status &&
-    String(selectedProcess.status).toLowerCase() === "moved to inventory" &&
-    (selectedProcess.finished_good?.produced_quantity || 0) ===
-    (selectedProcess.finished_good?.estimated_quantity || 0)
+      selectedProcess.status &&
+      String(selectedProcess.status).toLowerCase() === "moved to inventory" &&
+      (selectedProcess.finished_good?.produced_quantity || 0) ===
+        (selectedProcess.finished_good?.estimated_quantity || 0)
   );
 
   // Helper function to check if Start and Pause buttons should be hidden
@@ -497,12 +496,10 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
     });
   }, [proces, processDetails]);
 
-
   const markProcessDoneHandler = async (_id) => {
     try {
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL +
-        `production-process/done/${_id}`,
+        process.env.REACT_APP_BACKEND_URL + `production-process/done/${_id}`,
         {
           headers: {
             Authorization: `Bearer ${cookies?.access_token}`,
@@ -520,7 +517,6 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
       toast.error(error?.message || "Something went wrong");
     }
   };
-
 
   return (
     <div className="p-6">
@@ -849,7 +845,8 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                           }}
                         >
                           {row.original.creator
-                            ? `${row.original.creator.first_name || ""} ${row.original.creator.last_name || ""
+                            ? `${row.original.creator.first_name || ""} ${
+                                row.original.creator.last_name || ""
                               }`.trim() || "N/A"
                             : "N/A"}
                         </td>
@@ -899,8 +896,8 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                         >
                           {row.original.createdAt
                             ? moment(row.original.createdAt).format(
-                              "DD/MM/YYYY"
-                            )
+                                "DD/MM/YYYY"
+                              )
                             : "N/A"}
                         </td>
                         <td
@@ -909,65 +906,78 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                         >
                           {row.original.updatedAt
                             ? moment(row.original.updatedAt).format(
-                              "DD/MM/YYYY"
-                            )
+                                "DD/MM/YYYY"
+                              )
                             : "N/A"}
                         </td>
                         <td className="px-4 py-3 text-left">
                           {row?.original.status ===
                             "allocated finish goods" && (
-                              <button
-                                onClick={() =>
-                                  markOutFinishGoods(row.original?._id)
-                                }
-                                className="px-3 py-2 text-xs font-medium rounded-md border transition-all whitespace-nowrap"
-                                style={{
-                                  backgroundColor: colors.primary[50],
-                                  borderColor: colors.primary[200],
-                                  color: colors.primary[700],
-                                  minWidth: "fit-content",
-                                }}
-                              >
-                                Out Finished Goods
-                              </button>
-                            )}
+                            <button
+                              onClick={() =>
+                                markOutFinishGoods(row.original?._id)
+                              }
+                              className="px-3 py-2 text-xs font-medium rounded-md border transition-all whitespace-nowrap"
+                              style={{
+                                backgroundColor: colors.primary[50],
+                                borderColor: colors.primary[200],
+                                color: colors.primary[700],
+                                minWidth: "fit-content",
+                              }}
+                            >
+                              Out Finished Goods
+                            </button>
+                          )}
                         </td>
 
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress" ||
+                              row.original.status === "production paused") && (
+                              <button
+                                onClick={() =>
+                                  openUpdateProcessDrawerHandler(
+                                    row?.original?._id
+                                  )
+                                }
+                                className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
+                                style={
+                                  row.original.status === "production paused"
+                                    ? {
+                                        color: "#c97803",
+                                        backgroundColor: "#ff900026",
+                                      }
+                                    : {
+                                        color: colors.primary[600],
+                                        backgroundColor: colors.primary[50],
+                                      }
+                                }
+                                title={
+                                  row.original.status === "production paused"
+                                    ? "Resume process"
+                                    : "Start process"
+                                }
+                              >
+                                {row.original.status === "production paused"
+                                  ? "Resume"
+                                  : "Start"}
+                              </button>
+                            )}
 
-
-                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused") && <button
-                              onClick={() => openUpdateProcessDrawerHandler(row?.original?._id)}
-                              className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                              style={
-                                row.original.status === "production paused"
-                                  ? {
-
-                                    color: "#c97803",
-                                    backgroundColor: "#ff900026",
-                                  }
-                                  : {
-
-                                    color: colors.primary[600],
-                                    backgroundColor: colors.primary[50],
-                                  }
-                              }
-                              title={
-                                row.original.status === "production paused"
-                                  ? "Resume process"
-                                  : "Start process"
-                              }
-                            >
-                              {row.original.status === "production paused" ? "Resume" : "Start"}
-                            </button>}
-
-                            {(row.original.status === "production started" || row.original.status === "production in progress") &&
-                              row?.original?.finished_good?.estimated_quantity ===
-                              row?.original?.finished_good?.produced_quantity && (
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress") &&
+                              row?.original?.finished_good
+                                ?.estimated_quantity ===
+                                row?.original?.finished_good
+                                  ?.produced_quantity && (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                                  onClick={() => markProcessDoneHandler(row.original?._id)}
+                                  onClick={() =>
+                                    markProcessDoneHandler(row.original?._id)
+                                  }
                                   style={{
                                     color: "#05ed71",
                                     backgroundColor: "#8df2bc66",
@@ -975,11 +985,11 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                                 >
                                   Finish
                                 </button>
-                              )
-                            }
+                              )}
 
-
-                            {(row.original.status === "production started" || row.original.status === "production in progress") &&
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress") &&
                               !shouldHideStartPauseButtons(row.original) && (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
@@ -991,10 +1001,10 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                                     backgroundColor: colors.error[50],
                                   }}
                                 >
-                                  {row?.original?.status !== "production paused" && "Pause"}
+                                  {row?.original?.status !==
+                                    "production paused" && "Pause"}
                                 </button>
                               )}
-
 
                             {openProcessDetailsDrawerHandler && (
                               <button
@@ -1392,7 +1402,8 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                       Deleting...
                     </>
                   ) : (
-                    `Delete ${selectedProcesses.length} Process${selectedProcesses.length > 1 ? "es" : ""
+                    `Delete ${selectedProcesses.length} Process${
+                      selectedProcesses.length > 1 ? "es" : ""
                     }`
                   )}
                 </button>
@@ -1461,11 +1472,12 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                 <div
                   className="h-4 rounded-full transition-all duration-500 ease-out"
                   style={{
-                    width: `${((selectedProcess.finished_good?.produced_quantity || 0) /
-                      (selectedProcess.finished_good?.estimated_quantity ||
-                        1)) *
+                    width: `${
+                      ((selectedProcess.finished_good?.produced_quantity || 0) /
+                        (selectedProcess.finished_good?.estimated_quantity ||
+                          1)) *
                       100
-                      }%`,
+                    }%`,
                     background: "linear-gradient(to right, #4ade80, #22c55e)",
                   }}
                 />
@@ -1490,8 +1502,9 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className={`w-3 h-3 rounded-full ${step.done ? "bg-green-500" : "bg-gray-400"
-                          }`}
+                        className={`w-3 h-3 rounded-full ${
+                          step.done ? "bg-green-500" : "bg-gray-400"
+                        }`}
                       ></span>
                       <span className="text-gray-800">{step.process}</span>
                     </div>
@@ -1529,14 +1542,18 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                       {selectedProcess.finished_good?.produced_quantity || 0}
                     </td>
                     <td className="p-3 text-gray-800">
-                      ₹{selectedProcess.finished_good?.item?.price || 0}
+                      {cookies?.role === "admin"
+                        ? `₹${selectedProcess.finished_good?.item?.price || 0}`
+                        : "*****"}
                     </td>
                     <td className="p-3 text-gray-800">
-                      ₹
-                      {(
-                        (selectedProcess.finished_good?.estimated_quantity ||
-                          0) * (selectedProcess.finished_good?.item?.price || 0)
-                      ).toFixed(2)}
+                      {cookies?.role === "admin"
+                        ? `₹${(
+                            (selectedProcess.finished_good
+                              ?.estimated_quantity || 0) *
+                            (selectedProcess.finished_good?.item?.price || 0)
+                          ).toFixed(2)}`
+                        : "*****"}
                     </td>
                   </tr>
                 </tbody>
@@ -1562,8 +1579,9 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   {selectedProcess?.raw_materials?.map((rm, idx) => (
                     <tr
                       key={idx}
-                      className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                        } hover:bg-gray-100 transition`}
+                      className={`${
+                        idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-100 transition`}
                     >
                       <td className="p-3 text-gray-800">
                         {rm.item?.name || "N/A"}
@@ -1575,13 +1593,17 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                         {rm.used_quantity || 0}
                       </td>
                       <td className="p-3 text-gray-800">
-                        ₹{rm.item?.price || 0}
+                        {cookies?.role === "admin"
+                          ? `₹${rm.item?.price || 0}`
+                          : "*****"}
                       </td>
                       <td className="p-3 text-gray-800">
-                        ₹
-                        {(
-                          (rm?.estimated_quantity || 0) * (rm?.item?.price || 0)
-                        ).toFixed(2)}
+                        {cookies?.role === "admin"
+                          ? `₹${(
+                              (rm?.estimated_quantity || 0) *
+                              (rm?.item?.price || 0)
+                            ).toFixed(2)}`
+                          : "*****"}
                       </td>
                     </tr>
                   ))}
@@ -1608,41 +1630,58 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   {selectedProcess?.bom.scrap_materials?.map((sm, idx) => (
                     <tr
                       key={idx}
-                      className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                        } hover:bg-gray-100 transition`}
+                      className={`${
+                        idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-100 transition`}
                     >
                       <td className="p-3 text-gray-800">
                         {sm.scrap_name || "N/A"}
                       </td>
                       <td className="p-3 text-gray-800">
                         {(() => {
-                          const sc = (selectedProcess?.scrap_materials || []).find(
-                            (s: any) => String(s?.item || "") === String(sm?.item?._id || sm?.item || "")
+                          const sc = (
+                            selectedProcess?.scrap_materials || []
+                          ).find(
+                            (s: any) =>
+                              String(s?.item || "") ===
+                              String(sm?.item?._id || sm?.item || "")
                           );
-                          return (sc?.estimated_quantity ?? sm?.quantity ?? 0);
+                          return sc?.estimated_quantity ?? sm?.quantity ?? 0;
                         })()}
                       </td>
                       <td className="p-3 text-gray-800">
                         {(() => {
-                          const sc = (selectedProcess?.scrap_materials || []).find(
-                            (s: any) => String(s?.item || "") === String(sm?.item?._id || sm?.item || "")
+                          const sc = (
+                            selectedProcess?.scrap_materials || []
+                          ).find(
+                            (s: any) =>
+                              String(s?.item || "") ===
+                              String(sm?.item?._id || sm?.item || "")
                           );
-                          return (sc?.produced_quantity ?? 0);
+                          return sc?.produced_quantity ?? 0;
                         })()}
                       </td>
                       <td className="p-3 text-gray-800">
-                        ₹{sm.item?.price || 0}
+                        {cookies?.role === "admin"
+                          ? `₹${sm.item?.price || 0}`
+                          : "*****"}
                       </td>
                       <td className="p-3 text-gray-800">
-                        ₹
-                        {(() => {
-                          const sc = (selectedProcess?.scrap_materials || []).find(
-                            (s: any) => String(s?.item || "") === String(sm?.item?._id || sm?.item || "")
-                          );
-                          const est = sc?.estimated_quantity ?? sm?.quantity ?? 0;
-                          const price = sm?.item?.price || 0;
-                          return (Number(est) * Number(price)).toFixed(2);
-                        })()}
+                        {cookies?.role === "admin"
+                          ? `₹${(() => {
+                              const sc = (
+                                selectedProcess?.scrap_materials || []
+                              ).find(
+                                (s: any) =>
+                                  String(s?.item || "") ===
+                                  String(sm?.item?._id || sm?.item || "")
+                              );
+                              const est =
+                                sc?.estimated_quantity ?? sm?.quantity ?? 0;
+                              const price = sm?.item?.price || 0;
+                              return (Number(est) * Number(price)).toFixed(2);
+                            })()}`
+                          : "*****"}
                       </td>
                     </tr>
                   ))}
@@ -1662,15 +1701,16 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   isMoveToInventoryDisabled
                     ? selectedProcess?.status &&
                       String(selectedProcess.status).toLowerCase() ===
-                      "moved to inventory"
+                        "moved to inventory"
                       ? "Already moved to inventory"
                       : "Produced quantity is greater than or equal to estimated quantity"
                     : "Move to Inventory"
                 }
-                className={`px-5 py-2 rounded-lg shadow-md transition ${isMoveToInventoryDisabled
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
+                className={`px-5 py-2 rounded-lg shadow-md transition ${
+                  isMoveToInventoryDisabled
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
               >
                 Move to Inventory
               </button>

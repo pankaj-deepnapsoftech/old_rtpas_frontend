@@ -116,8 +116,11 @@ const AddBom: React.FC<AddBomProps> = ({
     },
   ]);
   const [scrapCatalog, setScrapCatalog] = useState<any[] | []>([]);
-  const [isLoadingScrapCatalog, setIsLoadingScrapCatalog] = useState<boolean>(false);
-  const [scrapOptions, setScrapOptions] = useState<{ value: string; label: string }[]>([]);
+  const [isLoadingScrapCatalog, setIsLoadingScrapCatalog] =
+    useState<boolean>(false);
+  const [scrapOptions, setScrapOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   const categoryOptions = [
     { value: "finished goods", label: "Finished Goods" },
@@ -236,6 +239,12 @@ const AddBom: React.FC<AddBomProps> = ({
     // console.log(body)
     try {
       const response = await addBom(body).unwrap();
+
+      // Update scrap quantities after successful BOM creation
+      if (modifiedScrapMaterials && modifiedScrapMaterials.length > 0) {
+        await updateScrapQuantities(modifiedScrapMaterials);
+      }
+
       toast.success(response?.message);
       fetchBomsHandler();
       closeDrawerHandler();
@@ -248,6 +257,54 @@ const AddBom: React.FC<AddBomProps> = ({
       toast.error(error?.data?.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Function to update scrap quantities in scrap management
+  const updateScrapQuantities = async (scrapMaterialsToUpdate: any[]) => {
+    try {
+      const updatePromises = scrapMaterialsToUpdate.map(
+        async (scrapMaterial) => {
+          const scrapId = scrapMaterial.item || scrapMaterial.scrap_id;
+          const quantityToAdd = Number(scrapMaterial.quantity) || 0;
+
+          // Find the current scrap from catalog
+          const currentScrap = scrapCatalog.find((s: any) => s._id === scrapId);
+          if (!currentScrap) {
+            console.warn(`Scrap with ID ${scrapId} not found in catalog`);
+            return;
+          }
+
+          const currentQty = Number(currentScrap.qty) || 0;
+          const newQty = currentQty + quantityToAdd;
+
+          // Update the scrap quantity
+          const updateResponse = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}scrap/update/${scrapId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${cookies?.access_token}`,
+              },
+              body: JSON.stringify({
+                qty: newQty,
+              }),
+            }
+          );
+
+          if (!updateResponse.ok) {
+            console.error(
+              `Failed to update scrap quantity for ${currentScrap.Scrap_name}`
+            );
+          }
+        }
+      );
+
+      await Promise.all(updatePromises);
+    } catch (error: any) {
+      console.error("Error updating scrap quantities:", error);
+      // Don't show error to user as BOM was created successfully
     }
   };
 
@@ -1084,7 +1141,7 @@ const AddBom: React.FC<AddBomProps> = ({
                         {/* Specification */}
                         <div>
                           <input
-                            value={resource.specification?.value || "" } 
+                            value={resource.specification?.value || ""}
                             placeholder="Resource Specification"
                             disabled
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -1218,12 +1275,15 @@ const AddBom: React.FC<AddBomProps> = ({
                             onChange={(d) => {
                               const newMaterials = [...scrapMaterials];
                               newMaterials[index].item_name = d;
-                              const sc = scrapCatalog.find((s: any) => s._id === d?.value);
+                              const sc = scrapCatalog.find(
+                                (s: any) => s._id === d?.value
+                              );
                               if (sc) {
                                 newMaterials[index].unit_cost = sc.price;
                                 newMaterials[index].uom = sc.uom;
                                 if (material.quantity) {
-                                  newMaterials[index].total_part_cost = +sc.price * +material.quantity;
+                                  newMaterials[index].total_part_cost =
+                                    +sc.price * +material.quantity;
                                 }
                               }
                               setScrapMaterials(newMaterials);
