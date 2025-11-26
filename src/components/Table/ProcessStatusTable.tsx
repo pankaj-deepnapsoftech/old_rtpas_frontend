@@ -336,6 +336,9 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
           },
         }
       );
+      console.log("Full Process Data:", res.data?.production_process);
+      console.log("Scrap Materials from API:", res.data?.production_process?.scrap_materials);
+      console.log("BOM Scrap Materials:", res.data?.production_process?.bom?.scrap_materials);
       setSelectedProcess(res.data?.production_process);
     } catch (error) {
       console.error("Failed to fetch process details:", error);
@@ -1002,55 +1005,62 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                               </button>
                             )}
 
-                            {(row.original.status === "production started" || row.original.status === "production in progress" || row.original.status === "production paused" || row.original.status === "received" )  && <button
-                              onClick={() => openUpdateProcessDrawerHandler(row?.original?._id)}
-                              className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                              style={
-                                row.original.status === "production paused"
-                                  ? {
-
-                                    color: "#c97803",
-                                    backgroundColor: "#ff900026",
-                                  }
-                                  : {
-
-                                    color: colors.primary[600],
-                                    backgroundColor: colors.primary[50],
-                                  }
-                              }
-                              title={
-                                row.original.status === "production paused"
-                                  ? "Resume process"
-                                  : "Start process"
-                              }
-                            >
-                              {row.original.status === "production paused" ? "Resume" : "Start"}
-                            </button>}
-
-                            {(
-                              (
-                                row.original.status === "production paused" ||
-                                (
-                                  row.original?.finished_good?.remaining_quantity === 0 &&
-                                  row.original.status !== "completed"
-                                )
-                              ) && (
-                                <button
-                                  className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                                  onClick={() => markProcessDoneHandler(row.original?._id)}
-                                  style={{
-                                    color: "#05ed71",
-                                    backgroundColor: "#8df2bc66",
-                                  }}
-                                >
-                                  Finish
-                                </button>
-                              )
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress" ||
+                              row.original.status === "production paused" ||
+                              row.original.status === "received") && (
+                              <button
+                                onClick={() =>
+                                  openUpdateProcessDrawerHandler(
+                                    row?.original?._id
+                                  )
+                                }
+                                className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
+                                style={
+                                  row.original.status === "production paused"
+                                    ? {
+                                        color: "#c97803",
+                                        backgroundColor: "#ff900026",
+                                      }
+                                    : {
+                                        color: colors.primary[600],
+                                        backgroundColor: colors.primary[50],
+                                      }
+                                }
+                                title={
+                                  row.original.status === "production paused"
+                                    ? "Resume process"
+                                    : "Start process"
+                                }
+                              >
+                                {row.original.status === "production paused"
+                                  ? "Resume"
+                                  : "Start"}
+                              </button>
                             )}
 
+                            {(row.original.status === "production paused" ||
+                              (row.original?.finished_good
+                                ?.remaining_quantity === 0 &&
+                                row.original.status !== "completed")) && (
+                              <button
+                                className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
+                                onClick={() =>
+                                  markProcessDoneHandler(row.original?._id)
+                                }
+                                style={{
+                                  color: "#05ed71",
+                                  backgroundColor: "#8df2bc66",
+                                }}
+                              >
+                                Finish
+                              </button>
+                            )}
 
-
-                            {(row.original.status === "production started" || row.original.status === "production in progress" ) &&
+                            {(row.original.status === "production started" ||
+                              row.original.status ===
+                                "production in progress") &&
                               !shouldHideStartPauseButtons(row.original) && (
                                 <button
                                   className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
@@ -1533,9 +1543,12 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                 <div
                   className="h-4 rounded-full transition-all duration-500 ease-out"
                   style={{
-                    width: `${((selectedProcess.finished_good?.final_produce_quantity + selectedProcess.finished_good?.inventory_last_changes_quantity || 0) /
-                      (selectedProcess.finished_good?.estimated_quantity ||
-                        1)) *
+                    width: `${
+                      ((selectedProcess.finished_good?.final_produce_quantity +
+                        selectedProcess.finished_good
+                          ?.inventory_last_changes_quantity || 0) /
+                        (selectedProcess.finished_good?.estimated_quantity ||
+                          1)) *
                       100
                     }%`,
                     background: "linear-gradient(to right, #4ade80, #22c55e)",
@@ -1543,8 +1556,10 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                 />
               </div>
               <p className="text-xs mt-2 text-gray-600">
-                {selectedProcess.finished_good?.final_produce_quantity + selectedProcess.finished_good?.inventory_last_changes_quantity || 0} /{" "}
-                {selectedProcess.finished_good?.estimated_quantity || 0} units
+                {selectedProcess.finished_good?.final_produce_quantity +
+                  selectedProcess.finished_good
+                    ?.inventory_last_changes_quantity || 0}{" "}
+                / {selectedProcess.finished_good?.estimated_quantity || 0} units
                 completed
               </p>
             </section>
@@ -1599,7 +1614,9 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                       {selectedProcess.finished_good?.estimated_quantity || 0}
                     </td>
                     <td className="p-3 text-gray-800">
-                      {selectedProcess.finished_good?.final_produce_quantity + selectedProcess.finished_good?.inventory_last_changes_quantity || 0}
+                      {selectedProcess.finished_good?.final_produce_quantity +
+                        selectedProcess.finished_good
+                          ?.inventory_last_changes_quantity || 0}
                     </td>
                     <td className="p-3 text-gray-800">
                       {cookies?.role === "admin"
@@ -1687,64 +1704,57 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedProcess?.bom.scrap_materials?.map((sm, idx) => (
-                    <tr
-                      key={idx}
-                      className={`${
-                        idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      } hover:bg-gray-100 transition`}
-                    >
-                      <td className="p-3 text-gray-800">
-                        {sm.scrap_name || "N/A"}
-                      </td>
-                      <td className="p-3 text-gray-800">
-                        {(() => {
-                          const sc = (
-                            selectedProcess?.scrap_materials || []
-                          ).find(
-                            (s: any) =>
-                              String(s?.item || "") ===
-                              String(sm?.item?._id || sm?.item || "")
-                          );
-                          return sc?.estimated_quantity ?? sm?.quantity ?? 0;
-                        })()}
-                      </td>
-                      <td className="p-3 text-gray-800">
-                        {(() => {
-                          const sc = (
-                            selectedProcess?.scrap_materials || []
-                          ).find(
-                            (s: any) =>
-                              String(s?.item || "") ===
-                              String(sm?.item?._id || sm?.item || "")
-                          );
-                          return sc?.produced_quantity ?? 0;
-                        })()}
-                      </td>
-                      <td className="p-3 text-gray-800">
-                        {cookies?.role === "admin"
-                          ? `₹${sm.item?.price || 0}`
-                          : "*****"}
-                      </td>
-                      <td className="p-3 text-gray-800">
-                        {cookies?.role === "admin"
-                          ? `₹${(() => {
-                              const sc = (
-                                selectedProcess?.scrap_materials || []
-                              ).find(
-                                (s: any) =>
-                                  String(s?.item || "") ===
-                                  String(sm?.item?._id || sm?.item || "")
-                              );
-                              const est =
-                                sc?.estimated_quantity ?? sm?.quantity ?? 0;
-                              const price = sm?.item?.price || 0;
-                              return (Number(est) * Number(price)).toFixed(2);
-                            })()}`
-                          : "*****"}
-                      </td>
-                    </tr>
-                  ))}
+                  {selectedProcess?.bom.scrap_materials?.map((sm, idx) => {
+                    // Find matching scrap material from production process
+                    const scrapFromProcess = (selectedProcess?.scrap_materials || []).find(
+                      (s: any) => {
+                        const scrapItemId = String(s?.item?._id || s?.item || "");
+                        const bomItemId = String(sm?.item?._id || sm?.item || "");
+                        return scrapItemId === bomItemId;
+                      }
+                    );
+                    
+                    console.log(`Scrap Material ${idx}:`, {
+                      name: sm.scrap_name,
+                      bomItem: sm?.item?._id || sm?.item,
+                      foundInProcess: !!scrapFromProcess,
+                      processData: scrapFromProcess,
+                      producedQty: scrapFromProcess?.produced_quantity
+                    });
+
+                    return (
+                      <tr
+                        key={idx}
+                        className={`${
+                          idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        } hover:bg-gray-100 transition`}
+                      >
+                        <td className="p-3 text-gray-800">
+                          {sm.scrap_name || "N/A"}
+                        </td>
+                        <td className="p-3 text-gray-800">
+                          {scrapFromProcess?.estimated_quantity ?? sm?.quantity ?? 0}
+                        </td>
+                        <td className="p-3 text-gray-800">
+                          {scrapFromProcess?.produced_quantity ?? sm?.produced_quantity ?? 0}
+                        </td>
+                        <td className="p-3 text-gray-800">
+                          {cookies?.role === "admin"
+                            ? `₹${sm.item?.price || 0}`
+                            : "*****"}
+                        </td>
+                        <td className="p-3 text-gray-800">
+                          {cookies?.role === "admin"
+                            ? `₹${(() => {
+                                const est = scrapFromProcess?.estimated_quantity ?? sm?.quantity ?? 0;
+                                const price = sm?.item?.price || 0;
+                                return (Number(est) * Number(price)).toFixed(2);
+                              })()}`
+                            : "*****"}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </section>
