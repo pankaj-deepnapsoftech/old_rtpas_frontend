@@ -113,7 +113,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     []
   );
   const [showMarkAsDone, setShowMarkAsDone] = useState(false);
-  console.log(showMarkAsDone)
+  console.log(showMarkAsDone);
   const [scrapMaterials, setScrapMaterials] = useState<any[]>([
     {
       _id: "",
@@ -127,7 +127,12 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     },
   ]);
   const [scrapCatalog, setScrapCatalog] = useState<any[] | []>([]);
-  const [scrapOptions, setScrapOptions] = useState<{ value: string; label: string }[]>([]);
+  const [scrapOptions, setScrapOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [originalScrapMaterials, setOriginalScrapMaterials] = useState<any[]>(
+    []
+  );
 
   const [updateProcess] = useUpdateProcessMutation();
 
@@ -250,7 +255,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
         remaining_quantity: est - usedInItemUom,
       };
     });
-    console.log(submitBtnText)
+    console.log(submitBtnText);
     const updatedFinishedGoodRemaining =
       (Number(finishedGoodQuantity) || 0) -
       (Number(finishedGoodProducedQuantity) || 0);
@@ -320,6 +325,12 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       if (!response.success) {
         throw new Error(response.message);
       }
+
+      // Update scrap quantities in scrap management after successful process update
+      if (modifiedScrapMaterials && modifiedScrapMaterials.length > 0) {
+        await updateScrapQuantitiesFromProcess(modifiedScrapMaterials);
+      }
+
       toast.success(response.message);
 
       setSelectedProducts(updatedProducts);
@@ -343,6 +354,71 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       // Reset showMarkAsDone to previous state on error
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const updateScrapQuantitiesFromProcess = async (
+    updatedScrapMaterials: any[]
+  ) => {
+    try {
+      const updatePromises = updatedScrapMaterials.map(
+        async (scrapMaterial) => {
+          const scrapId = scrapMaterial.item || scrapMaterial.item_name?.value;
+          const estimatedQty = Number(scrapMaterial.estimated_quantity) || 0;
+          const producedQty = Number(scrapMaterial.produced_quantity) || 0;
+
+          const originalScrap = originalScrapMaterials.find(
+            (s: any) => (s.item || s.item_name?.value) === scrapId
+          );
+          const originalEstimatedQty = originalScrap
+            ? Number(originalScrap.estimated_quantity) || 0
+            : 0;
+          const originalProducedQty = originalScrap
+            ? Number(originalScrap.produced_quantity) || 0
+            : 0;
+
+          const oldDifference = originalEstimatedQty - originalProducedQty;
+          const newDifference = estimatedQty - producedQty;
+
+          const adjustmentAmount = newDifference - oldDifference;
+
+          if (adjustmentAmount === 0) return;
+
+          const currentScrap = scrapCatalog.find((s: any) => s._id === scrapId);
+          if (!currentScrap) {
+            console.warn(`Scrap with ID ${scrapId} not found in catalog`);
+            return;
+          }
+
+          const currentQty = Number(currentScrap.qty) || 0;
+
+          const newQty = currentQty - (estimatedQty - producedQty);
+
+          const updateResponse = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}scrap/update/${scrapId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${cookies?.access_token}`,
+              },
+              body: JSON.stringify({
+                qty: newQty,
+              }),
+            }
+          );
+
+          if (!updateResponse.ok) {
+            console.error(
+              `Failed to update scrap quantity for ${currentScrap.Scrap_name}`
+            );
+          }
+        }
+      );
+
+      await Promise.all(updatePromises);
+    } catch (error: any) {
+      console.error("Error updating scrap quantities:", error);
     }
   };
 
@@ -593,7 +669,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     if (countUnits.some((unit) => unit.value === uom)) return countUnits;
     if (areaUnits.some((unit) => unit.value === uom)) return areaUnits;
     if (energyUnits.some((unit) => unit.value === uom)) return energyUnits;
-    if (temperatureUnits.some((unit) => unit.value === uom)) return temperatureUnits;
+    if (temperatureUnits.some((unit) => unit.value === uom))
+      return temperatureUnits;
     return [];
   };
   // const getOptionFromValue = (value, options) =>
@@ -651,8 +728,8 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     // 4. Server data validation
     const hasServerUpdatedData = Boolean(
       fgEstimated !== undefined &&
-      fgProduced !== undefined &&
-      fgEstimated === fgProduced 
+        fgProduced !== undefined &&
+        fgEstimated === fgProduced
       // rawMaterials.every((rm: any) => {
       //   const est = Number(rm?.estimated_quantity) || 0;
       //   const used = Number(rm?.used_quantity) || 0;
@@ -696,7 +773,9 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       const modifiedRawMaterials =
         data.production_process.bom.raw_materials.map((material: any) => {
           const prod = data.production_process.raw_materials.find(
-            (p: any) => (p?.item?._id || p?.item) === (material?.item?._id || material?.item)
+            (p: any) =>
+              (p?.item?._id || p?.item) ===
+              (material?.item?._id || material?.item)
           );
 
           return {
@@ -732,37 +811,45 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       data.production_process?.bom?.scrap_materials?.forEach(
         (material: any) => {
           const itemObj = material && material.item ? material.item : null;
-          const itemId = itemObj && itemObj._id
-            ? itemObj._id
-            : typeof material?.item === "string"
-            ? material.item
-            : undefined;
+          const itemId =
+            itemObj && itemObj._id
+              ? itemObj._id
+              : typeof material?.item === "string"
+              ? material.item
+              : undefined;
 
-          const sc = (data.production_process.scrap_materials || []).find(
-            (p: any) => String(p?.item || "") === String(itemId || "")
-          ) || {};
+          const sc =
+            (data.production_process.scrap_materials || []).find(
+              (p: any) => String(p?.item || "") === String(itemId || "")
+            ) || {};
 
           const scFromCatalog = (scrapCatalog || []).find(
             (s: any) => String(s?._id || "") === String(itemId || "")
           );
 
-          const itemSelect = itemObj && itemObj._id && itemObj.name
-            ? { value: itemObj._id, label: itemObj.name }
-            : scFromCatalog && scFromCatalog._id && scFromCatalog.Scrap_name
-            ? { value: scFromCatalog._id, label: scFromCatalog.Scrap_name }
-            : material?.scrap_name
-            ? { value: material?.scrap_id || "", label: material.scrap_name }
-            : null;
+          const itemSelect =
+            itemObj && itemObj._id && itemObj.name
+              ? { value: itemObj._id, label: itemObj.name }
+              : scFromCatalog && scFromCatalog._id && scFromCatalog.Scrap_name
+              ? { value: scFromCatalog._id, label: scFromCatalog.Scrap_name }
+              : material?.scrap_name
+              ? { value: material?.scrap_id || "", label: material.scrap_name }
+              : null;
 
           scrap.push({
             _id: material?._id || "",
             item: itemId,
             item_name: itemSelect,
             description: material?.description || "",
-            estimated_quantity: sc?.estimated_quantity || material?.quantity || 0,
+            estimated_quantity:
+              sc?.estimated_quantity || material?.quantity || 0,
             produced_quantity: sc?.produced_quantity || 0,
             uom: itemObj?.uom || scFromCatalog?.uom || material?.uom || "",
-            unit_cost: itemObj?.price || scFromCatalog?.price || material?.unit_cost || "",
+            unit_cost:
+              itemObj?.price ||
+              scFromCatalog?.price ||
+              material?.unit_cost ||
+              "",
             total_part_cost: material?.total_part_cost || "",
             uom_produced_quantity: material?.uom_used_quantity || "",
           });
@@ -797,6 +884,17 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
       // Set all the state first
       setSelectedProducts(modifiedRawMaterials);
       setScrapMaterials(scrap);
+
+      // Store original scrap materials for comparison during update
+      setOriginalScrapMaterials(
+        scrap.map((s: any) => ({
+          item: s.item,
+          item_name: s.item_name,
+          produced_quantity: Number(s.produced_quantity) || 0,
+          estimated_quantity: Number(s.estimated_quantity) || 0,
+        }))
+      );
+
       setProcesses(processList);
       setProcessProgress(processProgressData);
       setProcessStatuses(initialStatuses);
@@ -809,7 +907,9 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
         data.production_process.bom.finished_good?.description
       );
       setFinishedGoodQuantity(fetchedEstimated);
-      setFinishedGoodUom(data.production_process.bom.finished_good?.item?.uom || "");
+      setFinishedGoodUom(
+        data.production_process.bom.finished_good?.item?.uom || ""
+      );
       setFinishedGoodUnitCost(
         data.production_process.bom.finished_good?.item?.price || 0
       );
@@ -844,7 +944,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
         setIsCompleted(true);
       } else if (fetchedStatus === "raw material approval pending") {
         setRawMaterialApprovalPending(true);
-      } 
+      }
 
       // Use setTimeout to ensure state updates are applied before computing
       setTimeout(() => {
@@ -1155,7 +1255,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             const value = +e.target.value;
                             const maxAllowed =
                               Number(finishedGoodRemainingQty) || 0;
-                            console.log(">>>",maxAllowed)
+                            console.log(">>>", maxAllowed);
                             if (value > maxAllowed) {
                               toast.error(
                                 "Produced Qty cannot be more than Estimated Qty"
@@ -1166,10 +1266,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             setFinishedGoodProducedQuantity(value);
                           }}
                           placeholder="Produced Quantity"
-                          className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                            ? "bg-gray-100 cursor-not-allowed"
-                            : ""
-                            }`}
+                          className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${
+                            finishedGoodUnchangedAndEqual
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                          }`}
                           disabled={finishedGoodUnchangedAndEqual}
                         />
                       </div>
@@ -1206,10 +1307,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             setFinishedGoodComments(e.target.value)
                           }
                           placeholder="Comments"
-                          className={`w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 ${finishedGoodUnchangedAndEqual
-                            ? "cursor-not-allowed"
-                            : ""
-                            }`}
+                          className={`w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 ${
+                            finishedGoodUnchangedAndEqual
+                              ? "cursor-not-allowed"
+                              : ""
+                          }`}
                           readOnly
                           disabled={finishedGoodUnchangedAndEqual}
                         />
@@ -1368,10 +1470,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                               setSelectedProducts(newMaterials);
                             }}
                             placeholder="Used Quantity"
-                            className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${
+                              finishedGoodUnchangedAndEqual
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           />
                         </div>
@@ -1389,10 +1492,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                               newMaterials[index].uom_used_quantity = value;
                               setSelectedProducts(newMaterials);
                             }}
-                            className={`w-full h-8 px-2 py-1 text-sm border border-gray-300 rounded ${finishedGoodUnchangedAndEqual
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`w-full h-8 px-2 py-1 text-sm border border-gray-300 rounded ${
+                              finishedGoodUnchangedAndEqual
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           >
                             <option value="">Select UOM</option>
@@ -1408,12 +1512,14 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                           <label className="sm:hidden text-xs font-semibold text-gray-700">
                             REMAIN. QTY
                           </label>
-                          {<input
-                            type="number"
-                            value={material?.remaining_quantity } 
-                            readOnly
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
-                          />}
+                          {
+                            <input
+                              type="number"
+                              value={material?.remaining_quantity}
+                              readOnly
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
+                            />
+                          }
                         </div>
 
                         <div>
@@ -1496,24 +1602,26 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                   return (
                     <div key={index} className="w-[280px]">
                       <div
-                        className={`border p-3 rounded-lg ${status?.done
-                          ? "bg-green-50 border-green-200"
-                          : status?.start
+                        className={`border p-3 rounded-lg ${
+                          status?.done
+                            ? "bg-green-50 border-green-200"
+                            : status?.start
                             ? "bg-blue-50 border-blue-200"
                             : "bg-gray-50 border-gray-200"
-                          }`}
+                        }`}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-sm font-medium text-gray-700">
                             Process {index + 1}
                           </label>
                           <div
-                            className={`px-2 py-1 rounded text-xs  font-medium ${status?.done
-                              ? "bg-green-100 text-green-800"
-                              : status?.start
+                            className={`px-2 py-1 rounded text-xs  font-medium ${
+                              status?.done
+                                ? "bg-green-100 text-green-800"
+                                : status?.start
                                 ? "bg-blue-100 text-blue-800"
                                 : "bg-gray-100 text-gray-600"
-                              }`}
+                            }`}
                           >
                             {status?.done
                               ? "Completed"
@@ -1541,10 +1649,11 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             value={progress.done}
                             onChange={(e) => handleDoneChange(e.target.value)}
                             placeholder="Enter work done (e.g. 50% completed, 20 pcs)"
-                            className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${
+                              finishedGoodUnchangedAndEqual
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           />
                         </div>
@@ -1605,7 +1714,7 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                     <div>PRODUCT NAME</div>
                     <div>EST. QTY</div>
                     <div>UOM</div>
-                    <div>PROD. QTY</div>
+                    <div>Scrap QTY</div>
                     {/* <div>UOM*</div> */}
                     <div>COMMENT</div>
                     <div>UNIT COST</div>
@@ -1665,16 +1774,27 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                             value={material.produced_quantity || ""}
                             onChange={(e) => {
                               if (finishedGoodUnchangedAndEqual) return;
+                              const newValue = Number(e.target.value);
+                              const estQty =
+                                Number(material.estimated_quantity) || 0;
+                              if (newValue > estQty) {
+                                if (typeof toast !== "undefined")
+                                  toast.error(
+                                    "Scrap QTY cannot be greater than EST. QTY"
+                                  );
+                                return;
+                              }
                               const newMaterials = [...scrapMaterials];
                               newMaterials[index].produced_quantity =
                                 e.target.value;
                               setScrapMaterials(newMaterials);
                             }}
                             placeholder="Produced Quantity"
-                            className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${finishedGoodUnchangedAndEqual
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`w-full px-2 py-1 border border-gray-300 rounded text-sm ${
+                              finishedGoodUnchangedAndEqual
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                             disabled={finishedGoodUnchangedAndEqual}
                           />
                         </div>
@@ -1743,12 +1863,13 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         finishedGoodUnchangedAndEqual
                       }
                       type="submit"
-                      className={`px-6 py-2 rounded transition-colors duration-200 ${isCompleted ||
+                      className={`px-6 py-2 rounded transition-colors duration-200 ${
+                        isCompleted ||
                         rawMaterialApprovalPending ||
                         finishedGoodUnchangedAndEqual
-                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-blue-500 text-white"
-                        }`}
+                          ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                          : "bg-gradient-to-r from-blue-500 to-blue-500 text-white"
+                      }`}
                     >
                       {isUpdating ? "Updating..." : submitBtnText}
                     </button>
@@ -1770,8 +1891,6 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
                         {isUpdating ? "Processing..." : "Mark as Done"}
                       </button>
                     )} */}
-
-                    
                   </div>
                 </div>
               </div>
