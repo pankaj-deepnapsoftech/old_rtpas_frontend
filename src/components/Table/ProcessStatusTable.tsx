@@ -422,13 +422,9 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
 
   // Disable Move to Inventory ONLY when status is 'moved to inventory' AND produced quantity equals estimated quantity
   const isMoveToInventoryDisabled = Boolean(
-    selectedProcess &&
-      selectedProcess.status &&
-      String(selectedProcess.status).toLowerCase() === "moved to inventory" &&
-      (selectedProcess.finished_good?.produced_quantity || 0) ===
-        (selectedProcess.finished_good?.estimated_quantity || 0)
+    (selectedProcess?.finished_good?.estimated_quantity === selectedProcess?.finished_good?.remaining_quantity || selectedProcess?.finished_good?.final_produce_quantity === 0  || (selectedProcess?.finished_good?.final_produce_quantity > 0 && (selectedProcess?.status === "moved to inventory" || selectedProcess?.status === "allocated finish goods" || selectedProcess?.status === "Out Finished Goods" || selectedProcess?.status === "received"  ) ) )
   );
-
+  console.log(">>>",selectedProcess)
   // Helper function to check if Start and Pause buttons should be hidden
   const shouldHideStartPauseButtons = (process) => {
     const status = String(process.status || "").toLowerCase();
