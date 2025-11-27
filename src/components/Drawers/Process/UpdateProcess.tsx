@@ -361,6 +361,18 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     updatedScrapMaterials: any[]
   ) => {
     try {
+      const allRawMaterialsConsumed = selectedProducts.every((rm: any) => {
+        const remaining = Number(rm?.remaining_quantity) || 0;
+        return remaining === 0;
+      });
+
+      if (!allRawMaterialsConsumed) {
+        console.log(
+          "Skipping scrap update: Not all raw materials have remaining quantity = 0"
+        );
+        return;
+      }
+
       const updatePromises = updatedScrapMaterials.map(
         async (scrapMaterial) => {
           const scrapId = scrapMaterial.item || scrapMaterial.item_name?.value;
