@@ -990,24 +990,6 @@ const ProcessStatusTable: React.FC<ProcessTableProps> = ({
                                   Finish
                                 </button>
                               )
-                            )} 
-
-                            {(row.original.status === "production paused" ||
-                              (row.original?.finished_good
-                                ?.remaining_quantity === 0 &&
-                                row.original.status !== "completed")) && (
-                              <button
-                                className="p-2 rounded-lg transition-all duration-200 hover:shadow-md"
-                                onClick={() =>
-                                  markProcessDoneHandler(row.original?._id)
-                                }
-                                style={{
-                                  color: "#05ed71",
-                                  backgroundColor: "#8df2bc66",
-                                }}
-                              >
-                                Finish
-                              </button>
                             )}
 
 
