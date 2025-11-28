@@ -12,7 +12,7 @@ import { colors } from "../theme/colors";
 import { Recycle } from "lucide-react";
 import AddNewScrap from "../components/Drawers/Scrap/AddNewScrap";
 import { RxCross2 } from "react-icons/rx";
-import SampleCSV from "../assets/csv/parties-sample.csv";
+import SampleCSV from "../assets/csv/scrap-sample.csv";
 
 const Scrap: React.FC = () => {
   const [cookies] = useCookies();
@@ -408,7 +408,7 @@ const Scrap: React.FC = () => {
                 className="text-lg font-semibold"
                 style={{ color: colors.text.primary }}
               >
-                Bulk Upload Merchants
+                Bulk Upload Scrap
               </h3>
               <button
                 onClick={() => setShowBulkUploadMenu(false)}

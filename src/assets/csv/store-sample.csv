@@ -1,3 +1,2 @@
-Scrap_name,Extract_from,Category,Quantity,Price,UOM,Description
-plastic wast,direct,plastic,10,100,pcs,hello ji
-paper wast,indirect,paper,20,200,pcs,hello ji 2
+name,address_line1,city,state
+Faridabad Store,"5E/12BP, Block E, New Industrial Twp 5, New Industrial Town",Faridabad,Haryana
