@@ -46,6 +46,7 @@ interface StoreTableProps {
   deleteStoreHandler?: (id: string) => void;
   approveStoreHandler?: (id: string) => void;
   bulkApproveStoresHandler?: (ids: string[]) => void;
+  enableBulkApprove?: boolean;
 }
 
 const StoreTable: React.FC<StoreTableProps> = ({
@@ -56,6 +57,7 @@ const StoreTable: React.FC<StoreTableProps> = ({
   deleteStoreHandler,
   approveStoreHandler,
   bulkApproveStoresHandler,
+  enableBulkApprove = true,
 }) => {
   const dataStores = Array.isArray(stores) ? stores : [];
   const memoStores = useMemo(() => dataStores, [stores]);
@@ -170,7 +172,7 @@ const StoreTable: React.FC<StoreTableProps> = ({
         </Select>
       </div>
 
-      {selectedStores.length > 0 && (
+      {enableBulkApprove && selectedStores.length > 0 && (
         <div className="flex items-center gap-3 mb-3">
           <Button
             size="sm"
@@ -204,26 +206,28 @@ const StoreTable: React.FC<StoreTableProps> = ({
           >
             {headerGroups.map((hg: HeaderGroup<any>) => (
               <Tr {...hg.getHeaderGroupProps()}>
-                <Th
-                  style={{
-                    color: colors.table.headerText,
-                    borderColor: colors.table.border,
-                  }}
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  textTransform="none"
-                  py={4}
-                  px={4}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    ref={(el) => {
-                      if (el) (el as any).indeterminate = isIndeterminate;
+                {enableBulkApprove && (
+                  <Th
+                    style={{
+                      color: colors.table.headerText,
+                      borderColor: colors.table.border,
                     }}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                </Th>
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    textTransform="none"
+                    py={4}
+                    px={4}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      ref={(el) => {
+                        if (el) (el as any).indeterminate = isIndeterminate;
+                      }}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
+                  </Th>
+                )}
                 {hg.headers.map((column: any) => (
                   <Th
                     {...column.getHeaderProps(column.getSortByToggleProps())}
@@ -281,17 +285,19 @@ const StoreTable: React.FC<StoreTableProps> = ({
                   }}
                   _hover={{ bg: colors.table.hover }}
                 >
-                  <Td
-                    style={{ borderColor: colors.table.border }}
-                    py={3}
-                    px={4}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedStores.includes(row.original._id)}
-                      onChange={(e) => handleSelectOne(row.original._id, e.target.checked)}
-                    />
-                  </Td>
+                  {enableBulkApprove && (
+                    <Td
+                      style={{ borderColor: colors.table.border }}
+                      py={3}
+                      px={4}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedStores.includes(row.original._id)}
+                        onChange={(e) => handleSelectOne(row.original._id, e.target.checked)}
+                      />
+                    </Td>
+                  )}
                   {row.cells.map((cell: Cell) => {
                     const colId = cell.column.id;
                     const original = row.original;

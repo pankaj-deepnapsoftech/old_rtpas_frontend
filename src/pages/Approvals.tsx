@@ -998,6 +998,7 @@ const Approvals: React.FC = () => {
                 deleteStoreHandler={deleteStoreHandler}
                 approveStoreHandler={approveStoreHandler}
                 bulkApproveStoresHandler={bulkApproveStoresHandler}
+                enableBulkApprove={true}
               />
             </div>
           </div>

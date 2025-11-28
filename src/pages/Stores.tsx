@@ -447,6 +447,7 @@ const Stores: React.FC = () => {
             deleteStoreHandler={deleteStoreHandler}
             openStoreDetailsDrawerHandler={openStoreDetailsDrawerHandler}
             openUpdateStoreDrawerHandler={openUpdateStoreDrawerHandler}
+            enableBulkApprove={false}
           />
         </div>
       </div>
