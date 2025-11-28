@@ -192,9 +192,20 @@ const LoginComponent: React.FC<LoginComponentProps> = ({
           </button>
         </form>
 
-        <div className="text-center py-3 " >
-          <button className="text-md font-medium text-blue-600 hover:underline" onClick={() => navigate("/")} >Back to home</button>
+        <div className="text-center py-3">
+          <button
+            className="text-md font-medium text-blue-600 hover:underline"
+            onClick={() => navigate("/")}
+          >
+            Back to home
+          </button>
         </div>
+
+        <p className="text-center text-gray-600 text-sm mt-4">
+          © Itsybizz. All Rights Reserved.
+        </p>
+
+
       </div>
 
     </div>
