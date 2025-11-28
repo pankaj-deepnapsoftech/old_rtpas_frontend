@@ -8,12 +8,14 @@ import { BiX } from "react-icons/bi";
 import { TbTruckDelivery } from "react-icons/tb";
 import { DispatchFormSchema } from "../../../Validation/DispatchFormValidation";
 import { colors } from "../../../theme/colors";
+import { Shipment } from "../../../ui/DispatchStrip";
 
 interface AddDispatchProps {
   show: boolean;
   setShow: (show: boolean) => void;
   fetchDispatch?: () => void;
   editDispatch?: any;
+  newDispatch?: Shipment
 }
 
 const AddDispatch: React.FC<AddDispatchProps> = ({
@@ -21,6 +23,7 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
   setShow,
   fetchDispatch,
   editDispatch,
+  newDispatch
 }) => {
   const [cookies] = useCookies();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,29 +73,29 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
   } = useFormik({
     initialValues: editDispatch
       ? {
-          ...editDispatch,
-          dispatch_qty: "", // only additional qty in edit mode
-        }
+        ...editDispatch,
+        dispatch_qty: "", // only additional qty in edit mode
+      }
       : {
-          sales_order_id: "",
-          tracking_id: "",
-          tracking_web: "",
-          dispatch_date: new Date().toISOString().split("T")[0],
-          courier_service: "",
-          remarks: "",
-          dispatch_qty: "",
-        },
+        sales_order_id: newDispatch ? newDispatch?._id : "",
+        tracking_id: "",
+        tracking_web: "",
+        dispatch_date: new Date().toISOString().split("T")[0],
+        courier_service: "",
+        remarks: "",
+        dispatch_qty: newDispatch ? newDispatch?.product_qty : "",
+      },
     enableReinitialize: true,
     onSubmit: async (values) => {
       if (isSubmitting) return;
 
-      const addQty = parseInt(values.dispatch_qty) || 0;
+      const addQty = parseInt(values.dispatch_qty) || newDispatch?.product_qty || 0;
       const prevQty = parseInt(editDispatch?.dispatch_qty) || 0;
       const totalQty = editDispatch ? prevQty + addQty : addQty;
 
       // Get order quantity for validation
       const orderQuantity =
-        selectedOrder?.product_qty || editDispatch?.quantity || 0;
+        selectedOrder?.product_qty || editDispatch?.quantity ||newDispatch?.product_qty ||  0;
 
       // Get product ID
       const firstProductId =
@@ -105,7 +108,7 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
         stockData?.current_stock ||
         stockData?.stock ||
         stockData?.product?.current_stock ||
-        stockData?.quantity_changed ||
+        stockData?.quantity_changed || newDispatch?.product_id?.current_stock ||
         0;
 
       // Validate order quantity first
@@ -167,7 +170,7 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
           const message =
             prevQty !== newQty
               ? response?.data?.message ||
-                "Dispatch updated successfully, status changed to Dispatch Pending"
+              "Dispatch updated successfully, status changed to Dispatch Pending"
               : "Dispatch updated successfully";
 
           toast.success(message);
@@ -184,6 +187,8 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
           toast.success("Dispatch created successfully");
         }
 
+
+
         resetForm();
         setSelectedOrder(null);
         setShow(false);
@@ -192,7 +197,7 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
         console.error("Error processing dispatch:", error);
         toast.error(
           error?.response?.data?.message ||
-            `Failed to ${editDispatch ? "update" : "create"} dispatch`
+          `Failed to ${editDispatch ? "update" : "create"} dispatch`
         );
       } finally {
         setIsSubmitting(false);
@@ -250,6 +255,12 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
     }
   }, [show, editDispatch]);
 
+  useEffect(() => {
+    if (newDispatch) {
+      setSelectedOrder(newDispatch)
+    }
+  }, [newDispatch])
+
   if (!show) return null;
 
   return (
@@ -271,7 +282,7 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
               </h2>
             </div>
             <button
-              onClick={() => setShow(false)}
+              onClick={() => {setShow(false);setSelectedOrder(null)}}
               className="p-2 rounded-lg border transition-colors"
               style={{ borderColor: colors.border.medium }}
             >
@@ -665,7 +676,18 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        {selectedOrder.product_id.map((product, index) => {
+                        {selectedOrder.product_id?.current_stock ? <div
+                          className="flex justify-between items-center text-sm"
+                        >
+                          <span className="text-blue-700 font-medium">
+                            {selectedOrder.product_id?.name ||
+                              "N/A"}
+                            :
+                          </span>
+                          <span className="text-blue-900 font-semibold">
+                            {selectedOrder.product_id?.current_stock} units available
+                          </span>
+                        </div> : selectedOrder.product_id.map((product, index) => {
                           const productId = product._id || product.product_id;
                           const stockData = productStocks[productId];
 
@@ -677,13 +699,13 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                             stockData?.quantity_changed ||
                             0;
 
-                          console.log("Stock Debug:", {
-                            productId,
-                            stockData,
-                            currentStock,
-                            rawCurrentStock: stockData?.current_stock,
-                            productStocks,
-                          });
+                          // console.log("Stock Debug:", {
+                          //   productId,
+                          //   stockData,
+                          //   currentStock,
+                          //   rawCurrentStock: stockData?.current_stock,
+                          //   productStocks,
+                          // });
 
                           return (
                             <div
@@ -726,17 +748,19 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                       stockData?.current_stock ||
                       stockData?.stock ||
                       stockData?.product?.current_stock ||
-                      stockData?.quantity_changed ||
+                      stockData?.quantity_changed || newDispatch?.product_id.current_stock ||
                       0;
 
                     // Get order quantity for validation
                     const orderQuantity =
-                      selectedOrder?.product_qty || editDispatch?.quantity || 0;
+                      selectedOrder?.product_qty || editDispatch?.quantity || newDispatch?.product_qty || 0;
+
+                      console.log(orderQuantity, " ======>>>>",newDispatch?.product_qty)
                     const currentDispatchQty =
                       parseInt(editDispatch?.dispatch_qty) || 0;
                     const totalDispatchQty = editDispatch
                       ? currentDispatchQty + value
-                      : value;
+                      : value ;
 
                     // Check against order quantity first
                     if (totalDispatchQty > orderQuantity) {
@@ -806,19 +830,21 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                         stockData?.current_stock ||
                         stockData?.stock ||
                         stockData?.product?.current_stock ||
-                        stockData?.quantity_changed ||
+                        stockData?.quantity_changed || newDispatch?.product_id?.current_stock ||
                         0;
 
                       const orderQuantity =
                         selectedOrder?.product_qty ||
-                        editDispatch?.quantity ||
+                        editDispatch?.quantity || newDispatch?.product_qty||
                         0;
                       const currentDispatchQty =
                         parseInt(editDispatch?.dispatch_qty) || 0;
-                      const enteredQty = parseInt(values.dispatch_qty) || 0;
+                      const enteredQty = parseInt(values.dispatch_qty)  || 0;
                       const totalDispatchQty = editDispatch
                         ? currentDispatchQty + enteredQty
-                        : enteredQty;
+                        : enteredQty || newDispatch?.product_qty;
+
+
 
                       // Check order quantity validation first
                       if (totalDispatchQty > orderQuantity) {
@@ -960,15 +986,15 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                       stockData?.current_stock ||
                       stockData?.stock ||
                       stockData?.product?.current_stock ||
-                      stockData?.quantity_changed ||
+                      stockData?.quantity_changed || newDispatch?.product_id?.current_stock ||
                       0;
 
                     // Use current stock directly
                     const availableStock = currentStock;
 
                     return (
-                      parseInt(values.dispatch_qty) > availableStock ||
-                      parseInt(values.dispatch_qty) <= 0
+                      parseInt(values.dispatch_qty || newDispatch?.product_qty) > availableStock ||
+                      parseInt(values.dispatch_qty || newDispatch?.product_qty) <= 0
                     );
                   })()
                 }
@@ -976,32 +1002,32 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                 style={{
                   backgroundColor:
                     isSubmitting ||
-                    (!editDispatch && !selectedOrder) || // Only require selectedOrder for new dispatches
-                    !values.dispatch_qty ||
-                    // stockError || // Commented out - reverting to toast warnings
-                    (() => {
-                      // Get product ID from either selected order or edit dispatch
-                      const firstProductId =
-                        selectedOrder?.product_id?.[0]?._id ||
-                        selectedOrder?.product_id?.[0]?.product_id ||
-                        editDispatch?.product_id;
+                      (!editDispatch && !selectedOrder) || // Only require selectedOrder for new dispatches
+                      !values.dispatch_qty ||
+                      // stockError || // Commented out - reverting to toast warnings
+                      (() => {
+                        // Get product ID from either selected order or edit dispatch
+                        const firstProductId =
+                          selectedOrder?.product_id?.[0]?._id ||
+                          selectedOrder?.product_id?.[0]?.product_id ||
+                          editDispatch?.product_id;
 
-                      const stockData = productStocks[firstProductId];
-                      const currentStock =
-                        stockData?.current_stock ||
-                        stockData?.stock ||
-                        stockData?.product?.current_stock ||
-                        stockData?.quantity_changed ||
-                        0;
+                        const stockData = productStocks[firstProductId];
+                        const currentStock =
+                          stockData?.current_stock ||
+                          stockData?.stock ||
+                          stockData?.product?.current_stock ||
+                          stockData?.quantity_changed || newDispatch?.product_id?.current_stock ||
+                          0;
 
-                      // Use current stock directly
-                      const availableStock = currentStock;
+                        // Use current stock directly
+                        const availableStock = currentStock;
 
-                      return (
-                        parseInt(values.dispatch_qty) > availableStock ||
-                        parseInt(values.dispatch_qty) <= 0
-                      );
-                    })()
+                        return (
+                          parseInt(values.dispatch_qty || newDispatch?.product_qty) > availableStock ||
+                          parseInt(values.dispatch_qty || newDispatch?.product_qty) <= 0
+                        );
+                      })()
                       ? colors.gray[400]
                       : colors.button.primary,
                 }}
@@ -1011,8 +1037,8 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                     ? "Updating..."
                     : "Creating..."
                   : editDispatch
-                  ? "Update Dispatch"
-                  : "Create Dispatch"}
+                    ? "Update Dispatch"
+                    : "Create Dispatch"}
               </button>
             </div>
           </div>

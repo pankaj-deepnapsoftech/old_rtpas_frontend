@@ -16,6 +16,7 @@ import Pagination from "./Pagination";
 import { colors } from "../theme/colors";
 import { MdAdd, MdOutlineRefresh } from "react-icons/md";
 import AddDispatch from "../components/Drawers/Dispatch/AddDispatch";
+import PartyStrip from "../ui/DispatchStrip";
 
 const Dispatch = () => {
   const [paymentFilter, setPaymentFilter] = useState("All");
@@ -23,7 +24,6 @@ const Dispatch = () => {
   const [productFilter, setProductFilter] = useState("All");
   const [showModal, setShowModal] = useState(false);
   const [showAddDispatch, setShowAddDispatch] = useState(false);
-  const [siteLink, setSiteLink] = useState("");
   const [trackingId, setTrackingId] = useState("");
   const [cookies] = useCookies();
   const [data, setData] = useState([]);
@@ -39,6 +39,7 @@ const Dispatch = () => {
   const [selectedDispatchId, setSelectedDispatchId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadType, setUploadType] = useState(""); // "delivery" or "invoice"
+  const [dispatchData,setDispatchData] = useState(null);
 
   const role = cookies?.role;
 
@@ -89,24 +90,7 @@ const Dispatch = () => {
 
     return status;
   };
-  const getPaymentBreakdown = (dispatch) => {
-    if (!dispatch?.invoice) return null;
-
-    const invoiceTotal = parseFloat(dispatch.invoice.total) || 0;
-    const invoiceBalance = parseFloat(dispatch.invoice.balance) || 0;
-
-    // Calculate total paid amount: total - balance
-    const totalPaid = Math.max(0, invoiceTotal - invoiceBalance);
-
-    return {
-      total: invoiceTotal,
-      paid: totalPaid,
-      remaining: invoiceBalance,
-      paymentsCount: dispatch.invoice.payments
-        ? dispatch.invoice.payments.length
-        : 0,
-    };
-  };
+ 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -158,10 +142,9 @@ const Dispatch = () => {
       );
 
       toast.success(
-        `${
-          uploadType === "delivery"
-            ? "Delivery proof uploaded successfully! Status changed to Delivered."
-            : "Invoice uploaded successfully"
+        `${uploadType === "delivery"
+          ? "Delivery proof uploaded successfully! Status changed to Delivered."
+          : "Invoice uploaded successfully"
         }`
       );
 
@@ -176,8 +159,7 @@ const Dispatch = () => {
     } catch (error) {
       console.error("Upload error:", error);
       toast.error(
-        `Failed to upload ${
-          uploadType === "delivery" ? "delivery proof" : "invoice"
+        `Failed to upload ${uploadType === "delivery" ? "delivery proof" : "invoice"
         }`
       );
     } finally {
@@ -244,8 +226,7 @@ const Dispatch = () => {
       }
 
       const response = await axios.get(
-        `${
-          process.env.REACT_APP_BACKEND_URL
+        `${process.env.REACT_APP_BACKEND_URL
         }dispatch/getAll?${params.toString()}`,
         {
           headers: {
@@ -574,7 +555,7 @@ const Dispatch = () => {
   //   );
   // }
 
-  console.log("daaaaata", data);
+  // console.log("daaaaata", data);
 
   return (
     <div
@@ -615,6 +596,7 @@ const Dispatch = () => {
                 onClick={() => {
                   setShowAddDispatch(true);
                   setEditDispatch(null);
+                  setDispatchData(null);
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors"
                 style={{
@@ -792,6 +774,12 @@ const Dispatch = () => {
             </div>
           </div>
         </div>
+
+        <div>
+          <PartyStrip setDispatchData={setDispatchData} setShowAddDispatch={setShowAddDispatch} />
+        </div>
+
+
         <div
           className="rounded-xl shadow-sm border border-gray-100 overflow-hidden"
           style={{
@@ -961,143 +949,143 @@ const Dispatch = () => {
                               {(role === "Accountant" ||
                                 role === "Sales" ||
                                 role === "admin") && (
-                                <>
-                                  <div className="flex items-center whitespace-nowrap gap-2">
-                                    <span
-                                      className="font-medium"
-                                      style={{ color: colors.text.primary }}
-                                    >
-                                      Sales Order:
-                                    </span>
-                                    <span
-                                      style={{ color: colors.text.secondary }}
-                                    >
-                                      {dispatch?.order_id ||
-                                        dispatch?.sales_order_id ||
-                                        "N/A"}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className="font-medium"
-                                      style={{ color: colors.text.primary }}
-                                    >
-                                      Sales Amount:
-                                    </span>
-                                    <span
-                                      style={{ color: colors.text.secondary }}
-                                    >
-                                      {dispatch?.sales_data ? (
-                                        <span className="flex items-center gap-1">
-                                          ₹{dispatch?.total_amount || "N/A"}
-                                        </span>
-                                      ) : (
-                                        `₹${dispatch?.total_amount || "N/A"}`
-                                      )}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className="font-medium"
-                                      style={{ color: colors.text.primary }}
-                                    >
-                                      Dispatch Amount:
-                                    </span>
-                                    <span
-                                      style={{ color: colors.text.secondary }}
-                                    >
-                                      {(() => {
-                                        const orderQty =
-                                          parseInt(dispatch?.quantity) ||
-                                          parseInt(dispatch?.sales_quantity) ||
-                                          0;
-                                        const dispatchQty =
-                                          parseInt(dispatch?.dispatch_qty) || 0;
-                                        const totalAmount =
-                                          parseFloat(dispatch?.total_amount) ||
-                                          0;
-                                        const dispatchAmount =
-                                          orderQty > 0
-                                            ? (dispatchQty / orderQty) *
-                                              totalAmount
-                                            : 0;
-
-                                        return dispatchAmount > 0 ? (
+                                  <>
+                                    <div className="flex items-center whitespace-nowrap gap-2">
+                                      <span
+                                        className="font-medium"
+                                        style={{ color: colors.text.primary }}
+                                      >
+                                        Sales Order:
+                                      </span>
+                                      <span
+                                        style={{ color: colors.text.secondary }}
+                                      >
+                                        {dispatch?.order_id ||
+                                          dispatch?.sales_order_id ||
+                                          "N/A"}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className="font-medium"
+                                        style={{ color: colors.text.primary }}
+                                      >
+                                        Sales Amount:
+                                      </span>
+                                      <span
+                                        style={{ color: colors.text.secondary }}
+                                      >
+                                        {dispatch?.sales_data ? (
                                           <span className="flex items-center gap-1">
-                                            ₹{Math.round(dispatchAmount)}
+                                            ₹{dispatch?.total_amount || "N/A"}
                                           </span>
                                         ) : (
-                                          "N/A"
-                                        );
-                                      })()}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className="font-medium"
-                                      style={{ color: colors.text.primary }}
-                                    >
-                                      Remaining Amount:
-                                    </span>
-                                    <span
-                                      style={{
-                                        color: (() => {
+                                          `₹${dispatch?.total_amount || "N/A"}`
+                                        )}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className="font-medium"
+                                        style={{ color: colors.text.primary }}
+                                      >
+                                        Dispatch Amount:
+                                      </span>
+                                      <span
+                                        style={{ color: colors.text.secondary }}
+                                      >
+                                        {(() => {
                                           const orderQty =
                                             parseInt(dispatch?.quantity) ||
-                                            parseInt(
-                                              dispatch?.sales_quantity
-                                            ) ||
+                                            parseInt(dispatch?.sales_quantity) ||
                                             0;
                                           const dispatchQty =
-                                            parseInt(dispatch?.dispatch_qty) ||
-                                            0;
+                                            parseInt(dispatch?.dispatch_qty) || 0;
                                           const totalAmount =
-                                            parseFloat(
-                                              dispatch?.total_amount
-                                            ) || 0;
+                                            parseFloat(dispatch?.total_amount) ||
+                                            0;
                                           const dispatchAmount =
                                             orderQty > 0
                                               ? (dispatchQty / orderQty) *
+                                              totalAmount
+                                              : 0;
+
+                                          return dispatchAmount > 0 ? (
+                                            <span className="flex items-center gap-1">
+                                              ₹{Math.round(dispatchAmount)}
+                                            </span>
+                                          ) : (
+                                            "N/A"
+                                          );
+                                        })()}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className="font-medium"
+                                        style={{ color: colors.text.primary }}
+                                      >
+                                        Remaining Amount:
+                                      </span>
+                                      <span
+                                        style={{
+                                          color: (() => {
+                                            const orderQty =
+                                              parseInt(dispatch?.quantity) ||
+                                              parseInt(
+                                                dispatch?.sales_quantity
+                                              ) ||
+                                              0;
+                                            const dispatchQty =
+                                              parseInt(dispatch?.dispatch_qty) ||
+                                              0;
+                                            const totalAmount =
+                                              parseFloat(
+                                                dispatch?.total_amount
+                                              ) || 0;
+                                            const dispatchAmount =
+                                              orderQty > 0
+                                                ? (dispatchQty / orderQty) *
                                                 totalAmount
+                                                : 0;
+                                            const remainingAmount =
+                                              totalAmount - dispatchAmount;
+                                            return remainingAmount > 0
+                                              ? colors.text.secondary
+                                              : colors.text.secondary;
+                                          })(),
+                                        }}
+                                      >
+                                        {(() => {
+                                          const orderQty =
+                                            parseInt(dispatch?.quantity) ||
+                                            parseInt(dispatch?.sales_quantity) ||
+                                            0;
+                                          const dispatchQty =
+                                            parseInt(dispatch?.dispatch_qty) || 0;
+                                          const totalAmount =
+                                            parseFloat(dispatch?.total_amount) ||
+                                            0;
+                                          const dispatchAmount =
+                                            orderQty > 0
+                                              ? (dispatchQty / orderQty) *
+                                              totalAmount
                                               : 0;
                                           const remainingAmount =
                                             totalAmount - dispatchAmount;
-                                          return remainingAmount > 0
-                                            ? colors.text.secondary
-                                            : colors.text.secondary;
-                                        })(),
-                                      }}
-                                    >
-                                      {(() => {
-                                        const orderQty =
-                                          parseInt(dispatch?.quantity) ||
-                                          parseInt(dispatch?.sales_quantity) ||
-                                          0;
-                                        const dispatchQty =
-                                          parseInt(dispatch?.dispatch_qty) || 0;
-                                        const totalAmount =
-                                          parseFloat(dispatch?.total_amount) ||
-                                          0;
-                                        const dispatchAmount =
-                                          orderQty > 0
-                                            ? (dispatchQty / orderQty) *
-                                              totalAmount
-                                            : 0;
-                                        const remainingAmount =
-                                          totalAmount - dispatchAmount;
 
-                                        return remainingAmount >= 0 ? (
-                                          <span className="flex items-center gap-1">
-                                            ₹{Math.round(remainingAmount)}
-                                          </span>
-                                        ) : (
-                                          "N/A"
-                                        );
-                                      })()}
-                                    </span>
-                                  </div>
-                                </>
-                              )}
+                                          return remainingAmount >= 0 ? (
+                                            <span className="flex items-center gap-1">
+                                              ₹{Math.round(remainingAmount)}
+                                            </span>
+                                          ) : (
+                                            "N/A"
+                                          );
+                                        })()}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
 
                               <div className="flex items-center gap-2">
                                 <span
@@ -1279,11 +1267,10 @@ const Dispatch = () => {
                             setUploadType("delivery");
                             setShowDeliveryProof(true);
                           }}
-                          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                            dispatch?.dispatch_status === "Delivered"
+                          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${dispatch?.dispatch_status === "Delivered"
                               ? "border-green-500 bg-green-50"
                               : ""
-                          }`}
+                            }`}
                           style={{
                             backgroundColor:
                               dispatch?.dispatch_status === "Delivered"
@@ -1387,11 +1374,10 @@ const Dispatch = () => {
                             setShowInvoice(true);
                           }}
                           disabled={dispatch?.invoice?.filename}
-                          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                            dispatch?.invoice?.filename
+                          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${dispatch?.invoice?.filename
                               ? "border-green-500 bg-green-50 cursor-not-allowed opacity-60"
                               : ""
-                          }`}
+                            }`}
                           style={{
                             backgroundColor: dispatch?.invoice?.filename
                               ? colors.success[50]
@@ -1806,6 +1792,7 @@ const Dispatch = () => {
         }}
         fetchDispatch={GetDispatch}
         editDispatch={editDispatch}
+        newDispatch={dispatchData}
       />
     </div>
   );
