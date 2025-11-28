@@ -236,11 +236,10 @@ const AddBom: React.FC<AddBomProps> = ({
         customId: r.customId,
       })),
     };
-    // console.log(body)
+    
     try {
       const response = await addBom(body).unwrap();
 
-      // Update scrap quantities after successful BOM creation
       if (modifiedScrapMaterials && modifiedScrapMaterials.length > 0) {
         await updateScrapQuantities(modifiedScrapMaterials);
       }
@@ -250,7 +249,15 @@ const AddBom: React.FC<AddBomProps> = ({
       closeDrawerHandler();
       console.log(response);
     } catch (error: any) {
-      if (error?.data?.message?.includes("Insufficient stock")) {
+      const bomWasCreated =
+        error?.data?.bom ||
+        error?.data?.message?.includes("Insufficient stock") ||
+        error?.data?.message?.includes("BOM has been created successfully");
+
+      if (bomWasCreated) {
+        if (modifiedScrapMaterials && modifiedScrapMaterials.length > 0) {
+          await updateScrapQuantities(modifiedScrapMaterials);
+        }
         fetchBomsHandler();
         closeDrawerHandler();
       }
