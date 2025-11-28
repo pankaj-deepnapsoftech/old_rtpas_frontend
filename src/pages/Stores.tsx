@@ -127,6 +127,14 @@ const Stores: React.FC = () => {
 
       const response = await bulkUpload(formData).unwrap();
       toast.success(response.message);
+      
+      setShowBulkUploadMenu(false);
+      
+      fetchStoresHandler();
+      
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
     } catch (err: any) {
       toast.error(err?.data?.message || err?.message || "Something went wrong");
     } finally {
@@ -439,6 +447,7 @@ const Stores: React.FC = () => {
             deleteStoreHandler={deleteStoreHandler}
             openStoreDetailsDrawerHandler={openStoreDetailsDrawerHandler}
             openUpdateStoreDrawerHandler={openUpdateStoreDrawerHandler}
+            enableBulkApprove={false}
           />
         </div>
       </div>

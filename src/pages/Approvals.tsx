@@ -998,6 +998,7 @@ const Approvals: React.FC = () => {
                 deleteStoreHandler={deleteStoreHandler}
                 approveStoreHandler={approveStoreHandler}
                 bulkApproveStoresHandler={bulkApproveStoresHandler}
+                enableBulkApprove={true}
               />
             </div>
           </div>
@@ -1359,38 +1360,13 @@ const Approvals: React.FC = () => {
               </div>
             </div>
 
-            {selectedSales.length > 0 && (
-              <div className="flex items-center gap-3 px-6 pt-4">
-                <Button
-                  size="sm"
-                  style={{ backgroundColor: colors.success[600], color: colors.text.inverse }}
-                  _hover={{ bg: colors.success[700] }}
-                  onClick={() => bulkApproveSalesHandler(selectedSales)}
-                >
-                  Approve Selected ({selectedSales.length})
-                </Button>
-                <Button size="sm" onClick={() => setSelectedSales([])}>Clear Selection</Button>
-              </div>
-            )}
+            
 
             <div className="overflow-hidden">
               <div className="max-h-[600px] overflow-y-auto">
                 <table className="min-w-full">
                   <thead style={{ backgroundColor: colors.table.header }}>
                     <tr>
-                      <th className="px-4 py-3" style={{ color: colors.table.headerText }}>
-                        <input
-                          type="checkbox"
-                          checked={filteredSales.length > 0 && selectedSales.length === filteredSales.length}
-                          ref={(el) => {
-                            if (el) (el as any).indeterminate = selectedSales.length > 0 && selectedSales.length < filteredSales.length;
-                          }}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedSales(filteredSales.map((s: any) => s._id));
-                            else setSelectedSales([]);
-                          }}
-                        />
-                      </th>
                       <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Order ID</th>
                       <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Party</th>
                       <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Product</th>
@@ -1416,16 +1392,7 @@ const Approvals: React.FC = () => {
                                 : colors.table.stripe,
                           }}
                         >
-                          <td className="px-4 py-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedSales.includes(row._id)}
-                              onChange={(e) => {
-                                if (e.target.checked) setSelectedSales((prev) => [...prev, row._id]);
-                                else setSelectedSales((prev) => prev.filter((x) => x !== row._id));
-                              }}
-                            />
-                          </td>
+                          
                           <td className="px-4 py-3">{row.order_id}</td>
                           <td className="px-4 py-3">{row?.party?.company_name || row?.party?.consignee_name[0]}</td>
                           <td className="px-4 py-3">{Array.isArray(row?.product_id) ? row?.product_id[0]?.name : "-"}</td>

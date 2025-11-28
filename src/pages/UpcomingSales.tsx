@@ -338,7 +338,7 @@ const UpcomingSales: React.FC = () => {
                       {sale.order_id || "-"}
                     </td>
                     <td className="px-4 py-3" style={{ color: colors.text.primary }}>
-                      {sale.party?.company_name || sale.party?.consignee_name || "-"}
+                      {sale.party?.company_name || sale.party?.consignee_name[0] || "-"}
                     </td>
                     <td className="px-4 py-3" style={{ color: colors.text.primary }}>
                       {sale.product_id?.name || "-"}
@@ -409,7 +409,7 @@ const UpcomingSales: React.FC = () => {
                           backgroundColor: colors.success[600],
                         }}
                       >
-                        Completed
+                        Complete
                       </Button>
                     </td>
                   </tr>

@@ -699,11 +699,9 @@ const SalesTable = ({
                       className="ml-2 text-sm"
                       style={{ color: colors.text.primary }}
                     >
-                      {purchase?.party?.consignee_name?.length > 0
-                        ? purchase?.party?.consignee_name
-                        : purchase?.party?.company_name}
+                      {purchase?.party?.consignee_name[0] || purchase?.party?.company_name }      
                     </span>
-                  </div>
+                  </div>   
                   <div>
                     <span
                       className="text-sm font-medium"
