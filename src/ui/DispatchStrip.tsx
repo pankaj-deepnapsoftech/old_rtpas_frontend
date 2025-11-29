@@ -23,12 +23,15 @@ enum FilteringTabs {
 
 const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowAddDispatch: (val: boolean) => void }> = ({ setDispatchData, setShowAddDispatch }) => {
 
-    const [filtering, setFiltring] = useState<FilteringTabs>(FilteringTabs.All)
+    const [filtering, setFiltring] = useState<FilteringTabs>(FilteringTabs.All);
     const [shipmentsData, setShipmentsData] = useState<Shipment[]>([]);
+    const [totalPage, setTotalPage] = useState<number>(0)
+    const [page, setPage] = useState<number>(1)
 
     const getAllSalesDataForDispatch = async () => {
         try {
-            const res = await axiosHandler.get('/sale/sales-dispatch-all');
+            const res = await axiosHandler.get(`/sale/sales-dispatch-all?&page=${page}`);
+            setTotalPage(res.data.totalPage)
             setShipmentsData(res.data.data);
         } catch (error) {
             console.log(error)
@@ -38,6 +41,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
     const getAllPendingSalesDataForDispatch = async () => {
         try {
             const res = await axiosHandler.get('/sale/sales-dispatch-pending');
+            setTotalPage(res.data.totalPage)
             setShipmentsData(res.data.data);
         } catch (error) {
             console.log(error)
@@ -48,6 +52,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
         try {
             const res = await axiosHandler.get('/sale/sales-dispatch-completed');
             setShipmentsData(res.data.data);
+            setTotalPage(res.data.totalPage)
         } catch (error) {
             console.log(error)
         }
@@ -66,7 +71,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
         } else if (filtering === "Dispatched") {
             getAllCompletedSalesDataForDispatch()
         }
-    }, [filtering])
+    }, [filtering,page])
 
     return (
         <main className="px-6 py-8 bg-slate-50">
@@ -147,7 +152,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
                             </div>
                         </div>
                     ))}
-                </div> :       <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-xl border border-slate-200 p-8">
+                </div> : <div className="flex flex-col items-center justify-center min-h-96 bg-white rounded-xl border border-slate-200 p-8">
                     <div className="text-6xl mb-4">📦</div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">
                         No Orders Dispatched
@@ -157,6 +162,40 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
                     </p>
 
                 </div>}
+
+            {  shipmentsData.length > 0 &&  <div className="flex items-center justify-center gap-2 py-6">
+
+                    {/* Prev */}
+                    <button onClick={()=>page > 1 && setPage((prev) => prev - 1)} className="px-3 py-1 rounded-md border text-sm 
+                         hover:bg-gray-100 transition">
+                        Prev
+                    </button>
+
+                    {/* Page Numbers */}
+                    {Array.from({ length: totalPage }).map((_, ind) => {
+                        const pageNum = ind + 1;
+                        return (
+                            <button
+                                key={ind}
+                                onClick={() => setPage(pageNum)}
+                                className={`px-3 py-1 rounded-md text-sm border 
+        ${page === pageNum ? "bg-blue-600 text-white" : "bg-white text-blue-600"}`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+
+
+
+                    {/* Next */}
+                    <button onClick={()=>totalPage > page && setPage((prev) => prev +1)} className="px-3 py-1 rounded-md border text-sm 
+                         hover:bg-gray-100 transition">
+                        Next
+                    </button>
+
+                </div>}
+
             </div>
         </main>
     );

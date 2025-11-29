@@ -672,7 +672,7 @@ const AddDispatch: React.FC<AddDispatchProps> = ({
                           <span className="text-blue-900 font-semibold">
                             {selectedOrder.product_id?.current_stock} units available
                           </span>
-                        </div> : selectedOrder.product_id.map((product, index) => {
+                        </div> : Array.isArray(selectedOrder?.product_id) && selectedOrder.product_id.map((product, index) => {
                           const productId = product._id || product.product_id;
                           const stockData = productStocks[productId];
 
