@@ -282,7 +282,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
               </div>
 
               {/* Bulk Actions */}
-              {selectedBoms.length > 0 && (
+              {/* {selectedBoms.length > 0 && (
                 <div className="flex items-center gap-3">
                   {bulkApproveBomsHandler && (
                     <button
@@ -312,7 +312,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
                     Clear Selection
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div className="flex items-center gap-3">
@@ -355,28 +355,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
                   <tr
                     style={{ borderBottom: `1px solid ${colors.table.border}` }}
                   >
-                    <th
-                      className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
-                      style={{
-                        color: colors.table.headerText,
-                        width: "60px",
-                        minWidth: "60px",
-                        position: "sticky",
-                        left: 0,
-                        zIndex: 3,
-                        backgroundColor: colors.table.header,
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        ref={(el) => {
-                          if (el) el.indeterminate = isIndeterminate;
-                        }}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                      />
-                    </th>
+                    
                     <th
                       className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
                       style={{ color: colors.table.headerText }}
@@ -446,33 +425,7 @@ const BOMTable: React.FC<BOMTableProps> = ({
                               : colors.table.stripe;
                         }}
                       >
-                        <td
-                          className="px-4 py-3 text-sm whitespace-nowrap"
-                          style={{
-                            color: colors.text.secondary,
-                            width: "60px",
-                            minWidth: "60px",
-                            position: "sticky",
-                            left: 0,
-                            zIndex: 2,
-                            backgroundColor:
-                              index % 2 === 0
-                                ? colors.background.card
-                                : colors.table.stripe,
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedBoms.includes(row.original._id)}
-                            onChange={(e) =>
-                              handleSelectBom(
-                                row.original._id,
-                                e.target.checked
-                              )
-                            }
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                          />
-                        </td>
+                     
                         <td
                           className="px-4 py-3 text-sm whitespace-nowrap font-mono"
                           style={{ color: colors.text.secondary }}

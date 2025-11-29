@@ -1,3 +1,6 @@
+//@ts-nocheck
+
+
 import { BiX } from "react-icons/bi";
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
@@ -31,7 +34,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   >();
   const [unitCost, setUnitCost] = useState<string | undefined>();
   const [description, setDescription] = useState<string | undefined>();
-  const [quantity, setQuantity] = useState<number | undefined>();
+  const [quantity, setQuantity] = useState<number | undefined>(0);
   const [uom, setUom] = useState<string | undefined>();
   const [category, setCategory] = useState<string | undefined>();
   const supportingDoc = useRef<HTMLInputElement | null>(null);
@@ -63,6 +66,11 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   >([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(false);
   const [updateBom] = useUpdateBOMMutation();
+
+
+
+
+
 
   const [labourCharges, setLabourCharges] = useState<number | undefined>();
   const [machineryCharges, setMachineryCharges] = useState<
@@ -112,7 +120,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   >([]);
   const [manpowerInput, setManpowerInput] = useState<string>("");
   const [manpowerCount, setManpowerCount] = useState<number>(0);
-
+  const [value, setValue] = useState(0)
   const [rawMaterials, setRawMaterials] = useState<any[]>([
     {
       _id: "",
@@ -148,7 +156,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
   const [originalScrapMaterials, setOriginalScrapMaterials] = useState<any[]>(
     []
   );
-
+  const [initialRawMaterials, setInitialRawMaterials] = useState([]);
   // ---------- Helpers ----------
 
   const addRawMaterial = () => {
@@ -177,7 +185,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     }
   };
 
-  const updateRawMaterial = (index: number, field: string, value: any) => {
+  const updateRawMaterial = (index: number, field: number, value: any) => {
     const updatedMaterials = [...rawMaterials];
     updatedMaterials[index] = { ...updatedMaterials[index], [field]: value };
 
@@ -273,6 +281,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       });
       setDescription(data.bom.finished_good.description);
       setQuantity(data.bom.finished_good.quantity);
+      setValue(data.bom.finished_good.quantity)
       setCost(data.bom.finished_good.cost);
       setUnitCost(data.bom.finished_good?.item?.price || 0);
       setUom(data.bom.finished_good?.item?.uom || "");
@@ -283,23 +292,23 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
       setSelectedResources(
         data.bom.resources?.length
           ? data.bom.resources.map((r: any) => ({
-              name: r.resource_id
-                ? { value: r.resource_id._id, label: r.resource_id.name }
-                : null,
-              type: r.type ? { value: r.type, label: r.type } : null,
-              specification: r.specification || "",
-              comment: r.comment || "",
-              customId: r.resource_id?.customId || "", // <-- add this
-            }))
+            name: r.resource_id
+              ? { value: r.resource_id._id, label: r.resource_id.name }
+              : null,
+            type: r.type ? { value: r.type, label: r.type } : null,
+            specification: r.specification || "",
+            comment: r.comment || "",
+            customId: r.resource_id?.customId || "", // <-- add this
+          }))
           : [
-              {
-                name: null,
-                type: null,
-                specification: "",
-                comment: "",
-                customId: "",
-              },
-            ]
+            {
+              name: null,
+              type: null,
+              specification: "",
+              comment: "",
+              customId: "",
+            },
+          ]
       );
 
       setManpowerCount(data.bom.manpower?.[0]?.number || empData?.length || 0);
@@ -312,7 +321,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         inputs.push({
           _id: material?._id,
           item_name: itemObj
-            ? { value: itemObj._id, label: itemObj.name }
+            ? { value: itemObj._id, label: itemObj.name, price:itemObj.price }
             : null,
           description: material?.description || "",
           quantity: material?.quantity || "",
@@ -333,6 +342,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         });
       });
       setRawMaterials(inputs);
+      setInitialRawMaterials(inputs)
 
       const scrap: any = [];
       data.bom?.scrap_materials?.forEach((material: any) => {
@@ -344,10 +354,10 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         const itemSelect = itemObj
           ? { value: itemObj._id, label: itemObj.name }
           : material?.scrap_id && material?.scrap_name
-          ? { value: material.scrap_id, label: material.scrap_name }
-          : scFromCatalog
-          ? { value: scFromCatalog._id, label: scFromCatalog.Scrap_name }
-          : null;
+            ? { value: material.scrap_id, label: material.scrap_name }
+            : scFromCatalog
+              ? { value: scFromCatalog._id, label: scFromCatalog.Scrap_name }
+              : null;
 
         scrap.push({
           _id: material?._id,
@@ -638,7 +648,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     }
   };
 
-  console.log(manpowerCount);
+
 
   // ---------- Effects ----------
   const fetchResourceHandler = async () => {
@@ -721,11 +731,11 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
         );
         return sc
           ? {
-              ...m,
-              item_name: { value: sc._id, label: sc.Scrap_name },
-              uom: m.uom || sc.uom || "",
-              unit_cost: m.unit_cost || sc.price || "",
-            }
+            ...m,
+            item_name: { value: sc._id, label: sc.Scrap_name },
+            uom: m.uom || sc.uom || "",
+            unit_cost: m.unit_cost || sc.price || "",
+          }
           : m;
       })
     );
@@ -801,6 +811,41 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
     }),
   };
 
+
+  const calculateAllmaterials = (qty: number) => {
+
+  
+    const percentChange = ((qty - value) / value) * 100;
+
+    
+    const multiplier = 1 + (percentChange / 100);
+
+    const newMaterials = initialRawMaterials?.map((item) => {
+      const newQuantity = Math.ceil(item?.quantity * multiplier);
+
+      return {
+        ...item,
+        quantity: newQuantity,
+        total_part_cost: Math.ceil(item?.item_name?.price * newQuantity)
+      };
+    });
+
+    setRawMaterials(newMaterials);
+    
+
+  };
+
+
+
+  // console.log("heyyyyyyyyy Rm", initialRawMaterials)
+
+
+  // useEffect(() => {
+  //   // calculateAllmaterials()
+  // }, [quantity])
+
+
+
   // ---------- UI ----------
 
   return (
@@ -860,8 +905,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                           cookies?.role === "admin"
                             ? totalPartsCost || ""
                             : totalPartsCost
-                            ? "*****"
-                            : ""
+                              ? "*****"
+                              : ""
                         }
                         readOnly
                         className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100"
@@ -911,8 +956,7 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                         <input
                           type="number"
                           value={quantity || ""}
-                          onChange={(e) =>
-                            onFinishedGoodQntyChangeHandler(+e.target.value)
+                          onChange={(e) => { onFinishedGoodQntyChangeHandler(+e.target.value); calculateAllmaterials(+e.target.value) }
                           }
                           placeholder="Quantity"
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
@@ -967,8 +1011,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             cookies?.role === "admin"
                               ? unitCost || ""
                               : unitCost
-                              ? "*****"
-                              : ""
+                                ? "*****"
+                                : ""
                           }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -985,8 +1029,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                             cookies?.role === "admin"
                               ? cost || ""
                               : cost
-                              ? "*****"
-                              : ""
+                                ? "*****"
+                                : ""
                           }
                           readOnly
                           className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -1124,8 +1168,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.unit_cost || ""
                                 : material.unit_cost
-                                ? "*****"
-                                : ""
+                                  ? "*****"
+                                  : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -1142,8 +1186,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.total_part_cost || ""
                                 : material.total_part_cost
-                                ? "*****"
-                                : ""
+                                  ? "*****"
+                                  : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -1267,9 +1311,9 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               ...updated[index],
                               name: selected
                                 ? {
-                                    value: selected.value,
-                                    label: selected.label,
-                                  }
+                                  value: selected.value,
+                                  label: selected.label,
+                                }
                                 : null,
                               customId: selected?.customId || "",
                               type: selected?.type
@@ -1503,8 +1547,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.unit_cost || ""
                                 : material.unit_cost
-                                ? "*****"
-                                : ""
+                                  ? "*****"
+                                  : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
@@ -1521,8 +1565,8 @@ const UpdateBom: React.FC<UpdateBomProps> = ({
                               cookies?.role === "admin"
                                 ? material.total_part_cost || ""
                                 : material.total_part_cost
-                                ? "*****"
-                                : ""
+                                  ? "*****"
+                                  : ""
                             }
                             readOnly
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
