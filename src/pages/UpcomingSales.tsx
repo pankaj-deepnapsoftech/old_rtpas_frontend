@@ -61,8 +61,8 @@ const UpcomingSales: React.FC = () => {
     } catch (error: any) {
       toast.error(
         error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch upcoming sales"
+        error.message ||
+        "Failed to fetch upcoming sales"
       );
     } finally {
       setIsLoading(false);
@@ -90,7 +90,7 @@ const UpcomingSales: React.FC = () => {
         (sale.createdAt &&
           new Date(sale.createdAt)
             ?.toISOString()
-            ?.substring(0, 10)  
+            ?.substring(0, 10)
             ?.split("-")
             ?.reverse()
             ?.join("")
@@ -116,17 +116,17 @@ const UpcomingSales: React.FC = () => {
         // Remove from both sales and filteredSales
         const updatedSales = sales.filter((sale: any) => sale._id !== saleId);
         const updatedFilteredSales = filteredSales.filter((sale: any) => sale._id !== saleId);
-        
+
         setSales(updatedSales);
         setFilteredSales(updatedFilteredSales);
-        
+
         toast.success("Order marked as completed and removed from list");
       }
     } catch (error: any) {
       toast.error(
         error.response?.data?.message ||
-          error.message ||
-          "Failed to mark order as completed"
+        error.message ||
+        "Failed to mark order as completed"
       );
     } finally {
       setIsLoading(false);
@@ -157,106 +157,106 @@ const UpcomingSales: React.FC = () => {
 
   return (
     <>
-    <div
-      className="min-h-screen p-4 lg:p-6"
-      style={{ backgroundColor: colors.background.page }}
-    >
       <div
-        className="rounded-xl shadow-sm border p-6 mb-6"
-        style={{
-          backgroundColor: colors.background.card,
-          borderColor: colors.border.light,
-        }}
+        className="min-h-screen p-4 lg:p-6"
+        style={{ backgroundColor: colors.background.page }}
       >
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-          <div>
-            <h1
-              className="text-2xl lg:text-3xl font-bold"
-              style={{ color: colors.text.primary }}
-            >
-              Coming Production
-            </h1>
-            <p
-              className="text-sm mt-1"
-              style={{ color: colors.text.secondary }}
-            >
-              View approved sales orders ready for production
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative">
-              <FiSearch
-                className="absolute left-3 top-1/2 transform -translate-y-1/2"
+        <div
+          className="rounded-xl shadow-sm border p-6 mb-6"
+          style={{
+            backgroundColor: colors.background.card,
+            borderColor: colors.border.light,
+          }}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <div>
+              <h1
+                className="text-2xl lg:text-3xl font-bold"
+                style={{ color: colors.text.primary }}
+              >
+                Coming Production
+              </h1>
+              <p
+                className="text-sm mt-1"
                 style={{ color: colors.text.secondary }}
-              />
-              <input
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors"
-                style={{
-                  backgroundColor: colors.input.background,
-                  borderColor: colors.input.border,
-                  color: colors.text.primary,
-                }}
-                placeholder="Search sales orders..."
-                value={searchKey || ""}
-                onChange={(e) => setSearchKey(e.target.value)}
-              />
+              >
+                View approved sales orders ready for production
+              </p>
             </div>
 
-            <button
-              onClick={() => fetchUpcomingSales(page)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
-              style={{
-                borderColor: colors.border.medium,
-                color: colors.text.primary,
-                backgroundColor: colors.background.card,
-              }}
-              disabled={isLoading}
-            >
-              <MdOutlineRefresh
-                size="16px"
-                className={isLoading ? "animate-spin" : ""}
-              />
-              Refresh
-            </button>
-          </div>
-        </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative">
+                <FiSearch
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                  style={{ color: colors.text.secondary }}
+                />
+                <input
+                  className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                  style={{
+                    backgroundColor: colors.input.background,
+                    borderColor: colors.input.border,
+                    color: colors.text.primary,
+                  }}
+                  placeholder="Search sales orders..."
+                  value={searchKey || ""}
+                  onChange={(e) => setSearchKey(e.target.value)}
+                />
+              </div>
 
-        <div className="overflow-x-auto"> 
-          <table className="min-w-full">
-            <thead style={{ backgroundColor: colors.table.header }}>
-              <tr>
-                <th
-                  className="px-4 py-3 text-left font-semibold"
-                  style={{ color: colors.table.headerText }}
-                >
-                  Order ID
-                </th>
-                <th
-                  className="px-4 py-3 text-left font-semibold"
-                  style={{ color: colors.table.headerText }}
-                >
-                  Party/Company
-                </th>
-                <th
-                  className="px-4 py-3 text-left font-semibold"
-                  style={{ color: colors.table.headerText }}
-                >
-                  Product
-                </th>
-                <th
-                  className="px-4 py-3 text-left font-semibold"
-                  style={{ color: colors.table.headerText }}
-                >
-                  Quantity
-                </th>
-                {/* <th
+              <button
+                onClick={() => fetchUpcomingSales(page)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium border transition-colors"
+                style={{
+                  borderColor: colors.border.medium,
+                  color: colors.text.primary,
+                  backgroundColor: colors.background.card,
+                }}
+                disabled={isLoading}
+              >
+                <MdOutlineRefresh
+                  size="16px"
+                  className={isLoading ? "animate-spin" : ""}
+                />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead style={{ backgroundColor: colors.table.header }}>
+                <tr>
+                  <th
+                    className="px-4 py-3 text-left font-semibold"
+                    style={{ color: colors.table.headerText }}
+                  >
+                    Order ID
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left font-semibold"
+                    style={{ color: colors.table.headerText }}
+                  >
+                    Party/Company
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left font-semibold"
+                    style={{ color: colors.table.headerText }}
+                  >
+                    Product
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left font-semibold"
+                    style={{ color: colors.table.headerText }}
+                  >
+                    Quantity
+                  </th>
+                  {/* <th
                   className="px-4 py-3 text-left font-semibold"
                   style={{ color: colors.table.headerText }}
                 >
                 Quantity
                 </th> */}
-                {/*
+                  {/*
                 <th
                   className="px-4 py-3 text-left font-semibold"
                   style={{ color: colors.table.headerText }}
@@ -288,68 +288,68 @@ const UpcomingSales: React.FC = () => {
                   BOM Status
                 </th>
                 */}
-                <th
-                  className="px-4 py-3 text-left font-semibold"
-                  style={{ color: colors.table.headerText }}
-                >
-                  Created At
-                </th>
-                <th
-                  className="px-4 py-3 text-left font-semibold"
-                  style={{ color: colors.table.headerText }}
-                >
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td
-                    className="px-4 py-8 text-center"
-                    colSpan={7}
-                    style={{ color: colors.text.secondary }}
+                  <th
+                    className="px-4 py-3 text-left font-semibold"
+                    style={{ color: colors.table.headerText }}
                   >
-                    Loading...
-                  </td>
+                    Created At
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left font-semibold"
+                    style={{ color: colors.table.headerText }}
+                  >
+                    Action
+                  </th>
                 </tr>
-              ) : filteredSales.length === 0 ? (
-                <tr>
-                  <td
-                    className="px-4 py-8 text-center"
-                    colSpan={7}
-                    style={{ color: colors.text.secondary }}
-                  >
-                    No upcoming sales found
-                  </td>
-                </tr>
-              ) : (
-                filteredSales.map((sale: any, index: number) => (
-                  <tr
-                    key={sale._id}
-                    style={{
-                      backgroundColor:
-                        index % 2 === 0
-                          ? colors.background.card
-                          : colors.table.stripe,
-                    }}
-                  >
-                    <td className="px-4 py-3" style={{ color: colors.text.primary }}>
-                      {sale.order_id || "-"}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      className="px-4 py-8 text-center"
+                      colSpan={7}
+                      style={{ color: colors.text.secondary }}
+                    >
+                      Loading...
                     </td>
-                    <td className="px-4 py-3" style={{ color: colors.text.primary }}>
-                      {sale.party?.company_name || sale.party?.consignee_name[0] || "-"}
+                  </tr>
+                ) : filteredSales.length === 0 ? (
+                  <tr>
+                    <td
+                      className="px-4 py-8 text-center"
+                      colSpan={7}
+                      style={{ color: colors.text.secondary }}
+                    >
+                      No upcoming sales found
                     </td>
-                    <td className="px-4 py-3" style={{ color: colors.text.primary }}>
-                      {sale.product_id?.name || "-"}
-                    </td>
-                    {/* <td className="px-4 py-3" style={{ color: colors.text.primary }}>
+                  </tr>
+                ) : (
+                  filteredSales.map((sale: any, index: number) => (
+                    <tr
+                      key={sale._id}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? colors.background.card
+                            : colors.table.stripe,
+                      }}
+                    >
+                      <td className="px-4 py-3" style={{ color: colors.text.primary }}>
+                        {sale.order_id || "-"}
+                      </td>
+                      <td className="px-4 py-3" style={{ color: colors.text.primary }}>
+                        {sale.party?.company_name || sale.party?.consignee_name[0] || "-"}
+                      </td>
+                      <td className="px-4 py-3" style={{ color: colors.text.primary }}>
+                        {sale.product_id?.name || "-"}
+                      </td>
+                      {/* <td className="px-4 py-3" style={{ color: colors.text.primary }}>
                       {sale.product_qty} {sale.uom || ""}
                     </td> */}
-                    <td className="px-4 py-3" style={{ color: colors.text.primary }}>
-                      {sale.terms_of_delivery || sale.product_qty || "-"}
-                    </td>
-                    {/*
+                      <td className="px-4 py-3" style={{ color: colors.text.primary }}>
+                        {sale.terms_of_delivery || sale.product_qty || "-"}
+                      </td>
+                      {/*
                     <td className="px-4 py-3" style={{ color: colors.text.primary }}>
                       ₹{sale.price?.toFixed(2) || "0.00"}
                     </td>
@@ -386,75 +386,77 @@ const UpcomingSales: React.FC = () => {
                       )}
                     </td>
                     */}
-                    <td className="px-4 py-3" style={{ color: colors.text.secondary }}>
-                      {sale.createdAt
-                        ? new Date(sale.createdAt).toLocaleDateString("en-IN", {
+                      <td className="px-4 py-3" style={{ color: colors.text.secondary }}>
+                        {sale.createdAt
+                          ? new Date(sale.createdAt).toLocaleDateString("en-IN", {
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",
                           })
-                        : "-"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Button
-                        onClick={() =>
-                          promptCompletion(sale._id, sale.order_id || "")
-                        }
-                        size="sm"
-                        style={{
-                          backgroundColor: colors.success[500],
-                          color: "white",
-                        }}
-                        _hover={{
-                          backgroundColor: colors.success[600],
-                        }}
-                      >
-                        Complete
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                          : "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button
+                          onClick={() =>
+                            promptCompletion(sale._id, sale.order_id || "")
+                          }
+                          size="sm"
+                          style={{
+                            backgroundColor: colors.success[500],
+                            color: "white",
+                          }}
+                          _hover={{
+                            backgroundColor: colors.success[600],
+                          }}
+                        >
 
-        {!searchKey && totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
+                          Production Queue
+
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
-    </div>
 
-    <Modal isOpen={isConfirmOpen} onClose={closeConfirmModal} isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Mark as Completed?</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          Are you sure you want to mark{" "}
-          <strong>{selectedOrderId || "this order"}</strong> as completed? This
-          will remove it from the Coming Production list.
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={closeConfirmModal}>
-            Cancel
-          </Button>
-          <Button
-            colorScheme="green"
-            onClick={confirmCompletion}
-            isLoading={isLoading}
-          >
-            Yes, Complete
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          {!searchKey && totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Modal isOpen={isConfirmOpen} onClose={closeConfirmModal} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Mark as Completed?</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            Are you sure you want to mark{" "}
+            <strong>{selectedOrderId || "this order"}</strong> as completed? This
+            will remove it from the Coming Production list.
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={closeConfirmModal}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="green"
+              onClick={confirmCompletion}
+              isLoading={isLoading}
+            >
+              Yes, Complete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 };
