@@ -23,6 +23,8 @@ import { useSelector } from "react-redux";
 import { FiSearch } from "react-icons/fi";
 import { colors } from "../theme/colors";
 import StoreTable from "../components/Table/StoreTable";
+import axios from "axios";
+import { axiosHandler } from "../config/axios";
 
 const Approvals: React.FC = () => {
   const [cookies] = useCookies();
@@ -64,7 +66,7 @@ const Approvals: React.FC = () => {
   const [bomRMs, setBomRMs] = useState<any>([]);
   const [filteredBomRMs, setFilteredBomRMs] = useState<any>([]);
   const [isLoadingBomRMs, setIsLoadingBomRMs] = useState<boolean>(false);
-   const [currentStock,setCurrentStock] = useState(null)
+  const [currentStock, setCurrentStock] = useState(null)
   //  Sales (Unapproved)
   const [salesSearchKey, setSalesSearchKey] = useState<string | undefined>();
   const [sales, setSales] = useState<any>([]);
@@ -82,7 +84,7 @@ const Approvals: React.FC = () => {
   const [updateAgent] = useUpdateAgentMutation();
   const [deleteBom] = useDeleteBomMutation();
   const [updateBom] = useUpdateBOMMutation();
-  console.log("Modal",openModal)
+
   // For Unapproved Products
   const fetchUnapprovedProductsHandler = async () => {
     try {
@@ -587,6 +589,21 @@ const Approvals: React.FC = () => {
       toast.error("Something went wrong");
     }
   };
+
+
+  const handleSendDispatch = async (id) => {
+    try {
+      const res = await axiosHandler.put(`sale/sales-dispatch/${id}`,
+        { status: "Production Completed" },
+      )
+      setOpenModal(false)
+      fetchUnapprovedSalesHandler()
+      toast.success(res?.data?.message)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
 
 
   // Product Search
@@ -1360,12 +1377,12 @@ const Approvals: React.FC = () => {
               </div>
             </div>
 
-            
+
 
             <div className="overflow-hidden">
               <div className="max-h-[600px] overflow-y-auto">
                 <table className="min-w-full">
-                  <thead style={{ backgroundColor: colors.table.header }}>
+                  <thead style={{ backgroundColor: colors.table.header, textAlign: 'left' }}>
                     <tr>
                       <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Order ID</th>
                       <th className="px-4 py-3" style={{ color: colors.table.headerText }}>Party</th>
@@ -1392,7 +1409,7 @@ const Approvals: React.FC = () => {
                                 : colors.table.stripe,
                           }}
                         >
-                          
+
                           <td className="px-4 py-3">{row.order_id}</td>
                           <td className="px-4 py-3">{row?.party?.company_name || row?.party?.consignee_name[0]}</td>
                           <td className="px-4 py-3">{Array.isArray(row?.product_id) ? row?.product_id[0]?.name : "-"}</td>
@@ -1403,20 +1420,21 @@ const Approvals: React.FC = () => {
                             <Button
                               size="sm"
                               onClick={() => {
-                                const currentStock = row?.product_id[0]?.current_stock; 
+                                const currentStock = row?.product_id[0]?.current_stock;
                                 const qty = row?.product_qty;
 
                                 if (currentStock >= 1) {
                                   setOpenModal(true)
-                                  setCurrentStock({currentStock:row?.product_id[0]?.current_stock,
-                                    item_name: row?.product_id[0]?.name ,
+                                  setCurrentStock({
+                                    currentStock: row?.product_id[0]?.current_stock,
+                                    item_name: row?.product_id[0]?.name,
                                     sale_qyt: row.product_qty
                                   })
                                   setSelectedSaleId(row?._id)
                                 } else {
                                   approveSaleHandler(row?._id);
                                 }
-                              }} 
+                              }}
                             >
                               Approve
                             </Button>
@@ -1435,46 +1453,55 @@ const Approvals: React.FC = () => {
       </div>
       {
         openModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] z-50">
-            <div className="bg-white rounded-xl w-[380px] shadow-2xl p-6 animate-fadeIn">
-
-           
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Enter Value
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+            <div className="bg-white rounded-2xl w-[420px] shadow-2xl p-7 animate-[fadeIn_0.25s_ease-out]">
+              <h2 className="text-xl font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-600 rounded-full shadow-sm"></span>
+                Enter Value <span className="text-gray-400 text-sm ml-1">(Optional)</span>
               </h2>
-
-           
-              <div className="mb-4 text-sm text-gray-600 space-y-1">
+              <div className="mb-6 text-sm text-gray-700 space-y-1.5 bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <p>
-                  <span className="font-medium text-gray-800">Current Stock:</span>
+                  <span className="font-medium text-gray-900">Current Stock:</span>
                   {currentStock?.item_name} ({currentStock?.currentStock})
                 </p>
                 <p>
-                  <span className="font-medium text-gray-800">Sale Qty:</span>
+                  <span className="font-medium text-gray-900">Sale Qty:</span>{" "}
                   {currentStock?.sale_qyt}
                 </p>
               </div>
 
-          
-              <input
-                type="text"
-                className="border border-gray-300 w-full px-3 py-2 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition mb-5"
-                placeholder="Enter value..."
-                value={modalInput}
-                onChange={(e) => setModalInput(e.target.value)}
-              />
 
-            
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Value
+                </label>
+                <input
+                  type="text"
+                  className="border border-gray-300 w-full px-3 py-2 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                  placeholder="Enter value..."
+                  value={modalInput}
+                  onChange={(e) => setModalInput(e.target.value)}
+                />
+              </div>
+
+
               <div className="flex justify-end gap-3">
                 <button
-                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
                   onClick={() => setOpenModal(false)}
                 >
                   Cancel
                 </button>
 
                 <button
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow transition"
+                  className="px-4 py-2 rounded-lg bg-cyan-100 text-cyan-700 hover:bg-cyan-200 border border-cyan-300 transition"
+                  onClick={() => handleSendDispatch(selectedSaleId)}
+                >
+                  Move To Dispatch
+                </button>
+
+                <button
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition"
                   onClick={() => {
                     handleModalSubmit(modalInput);
                     setOpenModal(false);
