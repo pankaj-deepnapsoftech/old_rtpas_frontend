@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { TbTruckDelivery } from "react-icons/tb";
 import { HiOutlinePaperClip } from "react-icons/hi";
-import {  Search, Pencil, Download } from "lucide-react";
+import { Search, Pencil, Download } from "lucide-react";
 import axios from "axios";
 import { useCookies } from "react-cookie";
 import { toast } from "react-toastify";
@@ -40,7 +40,7 @@ const Dispatch = () => {
   const [selectedDispatchId, setSelectedDispatchId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadType, setUploadType] = useState(""); // "delivery" or "invoice"
-  const [dispatchData,setDispatchData] = useState(null);
+  const [dispatchData, setDispatchData] = useState(null);
 
   const role = cookies?.role;
 
@@ -91,7 +91,7 @@ const Dispatch = () => {
 
     return status;
   };
- 
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -334,6 +334,9 @@ const Dispatch = () => {
       setIsLoading(false);
     }
   };
+
+
+  console.log("d Data", data)
 
   useEffect(() => {
     GetDispatch();
@@ -882,7 +885,8 @@ const Dispatch = () => {
                                   <span
                                     style={{ color: colors.text.secondary }}
                                   >
-                                    {dispatch?.item_name || "N/A"}
+                                    {dispatch?.sales_data?.product_id[0].name
+                                      || "N/A"}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1269,8 +1273,8 @@ const Dispatch = () => {
                             setShowDeliveryProof(true);
                           }}
                           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${dispatch?.dispatch_status === "Delivered"
-                              ? "border-green-500 bg-green-50"
-                              : ""
+                            ? "border-green-500 bg-green-50"
+                            : ""
                             }`}
                           style={{
                             backgroundColor:
@@ -1376,8 +1380,8 @@ const Dispatch = () => {
                           }}
                           disabled={dispatch?.invoice?.filename}
                           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${dispatch?.invoice?.filename
-                              ? "border-green-500 bg-green-50 cursor-not-allowed opacity-60"
-                              : ""
+                            ? "border-green-500 bg-green-50 cursor-not-allowed opacity-60"
+                            : ""
                             }`}
                           style={{
                             backgroundColor: dispatch?.invoice?.filename
