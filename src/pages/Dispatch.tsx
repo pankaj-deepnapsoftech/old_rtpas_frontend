@@ -885,7 +885,7 @@ const Dispatch = () => {
                                   <span
                                     style={{ color: colors.text.secondary }}
                                   >
-                                    {dispatch?.sales_data?.product_id[0].name
+                                    {dispatch?.sales_data?.product_id[0]?.name
                                       || "N/A"}
                                   </span>
                                 </div>
