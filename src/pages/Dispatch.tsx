@@ -26,6 +26,8 @@ const Dispatch = () => {
   const [trackingId, setTrackingId] = useState("");
   const [cookies] = useCookies();
   const [data, setData] = useState([]);
+
+  console.log("this is the data",data)
   const [page, setPage] = useState(1);
   const [editDispatch, setEditDispatch] = useState(null);
 

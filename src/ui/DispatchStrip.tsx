@@ -25,12 +25,12 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
 
     const [filtering, setFiltring] = useState<FilteringTabs>(FilteringTabs.All);
     const [shipmentsData, setShipmentsData] = useState<Shipment[]>([]);
-    const [totalPage, setTotalPage] = useState<number>(0)
-    const [page, setPage] = useState<number>(1)
+    const [totalPage, setTotalPage] = useState<number>(0);
+    const [page, setPage] = useState<number>(1);
 
     const getAllSalesDataForDispatch = async () => {
         try {
-            const res = await axiosHandler.get(`/sale/sales-dispatch-all?&page=${page}`);
+            const res = await axiosHandler.get(`/sale/sales-dispatch-all?page=${page}&limit=9`);
             setTotalPage(res.data.totalPage)
             setShipmentsData(res.data.data);
         } catch (error) {
@@ -40,7 +40,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
 
     const getAllPendingSalesDataForDispatch = async () => {
         try {
-            const res = await axiosHandler.get('/sale/sales-dispatch-pending');
+            const res = await axiosHandler.get(`/sale/sales-dispatch-pending?page=${page}&limit=9`);
             setTotalPage(res.data.totalPage)
             setShipmentsData(res.data.data);
         } catch (error) {
@@ -50,7 +50,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
 
     const getAllCompletedSalesDataForDispatch = async () => {
         try {
-            const res = await axiosHandler.get('/sale/sales-dispatch-completed');
+            const res = await axiosHandler.get(`/sale/sales-dispatch-completed?page=${page}&limit=9`);
             setShipmentsData(res.data.data);
             setTotalPage(res.data.totalPage)
         } catch (error) {
@@ -71,7 +71,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
         } else if (filtering === "Dispatched") {
             getAllCompletedSalesDataForDispatch()
         }
-    }, [filtering,page])
+    }, [filtering, page])
 
     return (
         <main className="px-6 py-8 bg-slate-50">
@@ -88,7 +88,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
                         {Object.keys(FilteringTabs).map((tab) => (
                             <button
                                 key={tab}
-                                onClick={() => setFiltring(tab as FilteringTabs)}
+                                onClick={() => {setFiltring(tab as FilteringTabs);setPage(1)}}
                                 className={`px-6 py-2 text-sm font-medium rounded-full transition-all duration-300 transform ${tab === filtering
                                     ? "bg-blue-500 text-white shadow-md scale-105"
                                     : "text-slate-600 hover:bg-slate-100 hover:scale-105"
@@ -163,10 +163,10 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
 
                 </div>}
 
-            {  shipmentsData.length > 0 &&  <div className="flex items-center justify-center gap-2 py-6">
+                {shipmentsData.length > 0 && <div className="flex items-center justify-center gap-2 py-6">
 
                     {/* Prev */}
-                    <button onClick={()=>page > 1 && setPage((prev) => prev - 1)} className="px-3 py-1 rounded-md border text-sm 
+                    <button onClick={() => page > 1 && setPage((prev) => prev - 1)} className="px-3 py-1 rounded-md border text-sm 
                          hover:bg-gray-100 transition">
                         Prev
                     </button>
@@ -189,7 +189,7 @@ const PartyStrip: React.FC<{ setDispatchData: (data: Shipment) => void, setShowA
 
 
                     {/* Next */}
-                    <button onClick={()=>totalPage > page && setPage((prev) => prev +1)} className="px-3 py-1 rounded-md border text-sm 
+                    <button onClick={() => totalPage > page && setPage((prev) => prev + 1)} className="px-3 py-1 rounded-md border text-sm 
                          hover:bg-gray-100 transition">
                         Next
                     </button>
