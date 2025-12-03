@@ -9,6 +9,8 @@ import Layout from "./pages/Layout";
 import routes from "./routes/routes";
 import { useSelector } from "react-redux";
 import NotFound from "./pages/NotFound";
+import SessionExpired from "./pages/SubscriptionEnd";
+import PricingSection from "./pages/PricingModel";
 
 const App: React.FC = () => {
   const { allowedroutes, isSuper } = useSelector((state: any) => state.auth);
@@ -21,6 +23,9 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/login" element={<Login />} />
             {/* <Route path="/register" element={<Register />} /> */}
+            <Route path="/subscription-end" element={<SessionExpired />} />
+            <Route path="/pricing-modal" element={<PricingSection />} />
+
             <Route path="/" element={<Layout />}>
               {routes.map((route, ind) => {
                 const isAllowed =

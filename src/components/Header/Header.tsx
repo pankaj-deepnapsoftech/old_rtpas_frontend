@@ -95,7 +95,7 @@ const Header: React.FC = () => {
        
         <div className="flex items-center gap-4 ml-auto">
 
-        {/* <button className="text-white bg-blue-500 hover:bg-blue-600 rounded-md px-2 py-1 text-sm"
+        <button className="text-white bg-blue-500 hover:bg-blue-600 rounded-md px-2 py-1 text-sm"
           onClick={() => navigate('/pricing-modal?action=renew')}
         >
           Renew
@@ -106,7 +106,7 @@ const Header: React.FC = () => {
         >
           Upgrade
         </button>
-       */}
+      
           <button
             className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             aria-label="Notifications"
