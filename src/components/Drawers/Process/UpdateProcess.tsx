@@ -361,14 +361,20 @@ const UpdateProcess: React.FC<UpdateProcess> = ({
     updatedScrapMaterials: any[]
   ) => {
     try {
-      const allRawMaterialsConsumed = selectedProducts.every((rm: any) => {
-        const remaining = Number(rm?.remaining_quantity) || 0;
-        return remaining === 0;
-      });
+      const currentProducedQty = Number(finishedGoodProducedQuantity) || 0;
+      const remainingQty = Number(finishedGoodRemainingQty) || 0;
 
-      if (!allRawMaterialsConsumed) {
+      console.log(
+        "Current Produced Qty:",
+        currentProducedQty,
+        "Remaining Qty:",
+        remainingQty
+      );
+
+      if (currentProducedQty !== remainingQty) {
         console.log(
-          "Skipping scrap update: Not all raw materials have remaining quantity = 0"
+          "Skipping scrap update: Produced quantity does not equal remaining quantity",
+          { currentProducedQty, remainingQty }
         );
         return;
       }
